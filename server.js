@@ -31,22 +31,23 @@ function requireAuth(req, res, next) {
 
 // === Auth Routes ===
 
-app.post('/api/register', (req, res) => {
+app.post('/api/register', async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.status(400).json({ error: '请填写所有字段' });
   if (password.length < 4) return res.status(400).json({ error: '密码至少 4 位' });
-  if (db.getUserByUsername(username)) return res.status(400).json({ error: '用户名已被注册' });
+  const existing = await db.getUserByUsername(username);
+  if (existing) return res.status(400).json({ error: '用户名已被注册' });
 
   const hash = bcrypt.hashSync(password, SALT_ROUNDS);
-  const user = db.createUser(username, hash);
+  const user = await db.createUser(username, hash);
   req.session.userId = user.id;
   req.session.username = user.username;
   res.json({ id: user.id, uid: user.uid, username: user.username });
 });
 
-app.post('/api/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
-  const user = db.getUserByUsername(username);
+  const user = await db.getUserByUsername(username);
   if (!user || user.is_guest || !bcrypt.compareSync(password, user.password_hash)) {
     return res.status(400).json({ error: '用户名或密码错误' });
   }
@@ -55,10 +56,10 @@ app.post('/api/login', (req, res) => {
   res.json({ id: user.id, uid: user.uid, username: user.username });
 });
 
-app.post('/api/guest-login', (req, res) => {
+app.post('/api/guest-login', async (req, res) => {
   const randomSuffix = crypto.randomBytes(3).toString('hex').toUpperCase();
   const username = `游客_${randomSuffix}`;
-  const user = db.createGuestUser(username);
+  const user = await db.createGuestUser(username);
   req.session.userId = user.id;
   req.session.username = user.username;
   res.json({ id: user.id, uid: user.uid, username: user.username });
@@ -68,59 +69,61 @@ app.post('/api/logout', (req, res) => {
   req.session.destroy(() => res.json({ ok: true }));
 });
 
-app.get('/api/me', (req, res) => {
+app.get('/api/me', async (req, res) => {
   if (!req.session.userId) return res.json({ user: null });
-  const user = db.getUserById(req.session.userId);
+  const user = await db.getUserById(req.session.userId);
   res.json({ user });
 });
 
 // === Friend Routes ===
 
-app.get('/api/users/search', requireAuth, (req, res) => {
+app.get('/api/users/search', requireAuth, async (req, res) => {
   const q = req.query.q;
   if (!q || q.length < 1) return res.json({ users: [] });
-  const users = db.searchUsers(q, req.session.userId);
+  const users = await db.searchUsers(q, req.session.userId);
   res.json({ users });
 });
 
-app.get('/api/friends', requireAuth, (req, res) => {
-  const friends = db.getFriends(req.session.userId);
+app.get('/api/friends', requireAuth, async (req, res) => {
+  const friends = await db.getFriends(req.session.userId);
   res.json({ friends });
 });
 
-app.get('/api/friends/requests', requireAuth, (req, res) => {
-  const requests = db.getFriendRequests(req.session.userId);
+app.get('/api/friends/requests', requireAuth, async (req, res) => {
+  const requests = await db.getFriendRequests(req.session.userId);
   res.json({ requests });
 });
 
-app.post('/api/friends/request', requireAuth, (req, res) => {
+app.post('/api/friends/request', requireAuth, async (req, res) => {
   const { friendId } = req.body;
   if (friendId === req.session.userId) return res.status(400).json({ error: '不能添加自己' });
-  const friend = db.getUserById(friendId);
+  const friend = await db.getUserById(friendId);
   if (!friend) return res.status(404).json({ error: '用户不存在' });
 
-  const existingStatus = db.getFriendStatus(req.session.userId, friendId);
+  const existingStatus = await db.getFriendStatus(req.session.userId, friendId);
   if (existingStatus === 'accepted') return res.status(400).json({ error: '已经是好友' });
   if (existingStatus === 'pending') return res.status(400).json({ error: '已发送过请求' });
 
-  const result = db.sendFriendRequest(req.session.userId, friendId);
+  const result = await db.sendFriendRequest(req.session.userId, friendId);
   if (result.status === 'accepted') {
-    const friendUser = db.getUserById(friendId);
-    io.to(`user:${friendId}`).emit('friend added', { friend: { id: req.session.userId, uid: db.getUserById(req.session.userId).uid, username: req.session.username } });
+    const friendUser = await db.getUserById(friendId);
+    const myUser = await db.getUserById(req.session.userId);
+    io.to(`user:${friendId}`).emit('friend added', { friend: { id: req.session.userId, uid: myUser.uid, username: myUser.username } });
     io.to(`user:${req.session.userId}`).emit('friend added', { friend: { id: friendId, uid: friendUser.uid, username: friendUser.username } });
     res.json({ status: 'accepted' });
   } else {
-    io.to(`user:${friendId}`).emit('friend request', { from: { id: req.session.userId, uid: db.getUserById(req.session.userId).uid, username: req.session.username } });
+    const myUser = await db.getUserById(req.session.userId);
+    io.to(`user:${friendId}`).emit('friend request', { from: { id: req.session.userId, uid: myUser.uid, username: myUser.username } });
     res.json({ status: 'pending' });
   }
 });
 
-app.post('/api/friends/accept', requireAuth, (req, res) => {
+app.post('/api/friends/accept', requireAuth, async (req, res) => {
   const { friendId } = req.body;
-  const success = db.acceptFriendRequest(req.session.userId, friendId);
+  const success = await db.acceptFriendRequest(req.session.userId, friendId);
   if (success) {
-    const friendUser = db.getUserById(friendId);
-    const myUser = db.getUserById(req.session.userId);
+    const friendUser = await db.getUserById(friendId);
+    const myUser = await db.getUserById(req.session.userId);
     io.to(`user:${friendId}`).emit('friend added', { friend: { id: req.session.userId, uid: myUser.uid, username: myUser.username } });
     io.to(`user:${req.session.userId}`).emit('friend added', { friend: { id: friendId, uid: friendUser.uid, username: friendUser.username } });
     res.json({ ok: true });
@@ -129,18 +132,18 @@ app.post('/api/friends/accept', requireAuth, (req, res) => {
   }
 });
 
-app.post('/api/friends/decline', requireAuth, (req, res) => {
+app.post('/api/friends/decline', requireAuth, async (req, res) => {
   const { friendId } = req.body;
-  const success = db.declineFriendRequest(req.session.userId, friendId);
+  const success = await db.declineFriendRequest(req.session.userId, friendId);
   res.json({ ok: success });
 });
 
 // === Message Routes ===
 
-app.get('/api/messages/:friendId', requireAuth, (req, res) => {
+app.get('/api/messages/:friendId', requireAuth, async (req, res) => {
   const friendId = parseInt(req.params.friendId);
-  const messages = db.getMessages(req.session.userId, friendId);
-  const friend = db.getUserById(friendId);
+  const messages = await db.getMessages(req.session.userId, friendId);
+  const friend = await db.getUserById(friendId);
   const enriched = messages.map(m => ({
     id: m.id,
     content: m.content,
@@ -178,9 +181,9 @@ io.on('connection', (socket) => {
   socket.join(`user:${userId}`);
   console.log(`${username} 连接: ${socket.id}`);
 
-  socket.on('private message', ({ receiverId, content }) => {
+  socket.on('private message', async ({ receiverId, content }) => {
     const msg = { senderId: userId, receiverId, content, createdAt: new Date().toISOString() };
-    db.saveMessage(userId, receiverId, content);
+    await db.saveMessage(userId, receiverId, content);
     io.to(`user:${receiverId}`).emit('private message', msg);
     socket.emit('private message', msg);
   });

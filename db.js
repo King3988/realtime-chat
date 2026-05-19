@@ -1,163 +1,224 @@
-const Database = require('better-sqlite3');
-const path = require('path');
 const crypto = require('crypto');
+const path = require('path');
 
-const db = new Database(path.join(__dirname, 'data.db'));
-db.pragma('journal_mode = WAL');
+const isProd = !!process.env.DATABASE_URL;
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    uid TEXT UNIQUE NOT NULL,
-    username TEXT UNIQUE NOT NULL,
-    password_hash TEXT,
-    is_guest INTEGER DEFAULT 0,
-    created_at TEXT DEFAULT (datetime('now'))
-  );
+// === SQLite backend (development) ===
+let sqlite;
+if (!isProd) {
+  const Database = require('better-sqlite3');
+  sqlite = new Database(path.join(__dirname, 'data.db'));
+  sqlite.pragma('journal_mode = WAL');
+}
 
-  CREATE TABLE IF NOT EXISTS friends (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    friend_id INTEGER NOT NULL,
-    status TEXT NOT NULL DEFAULT 'pending',
-    created_at TEXT DEFAULT (datetime('now')),
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (friend_id) REFERENCES users(id),
-    UNIQUE(user_id, friend_id)
-  );
+// === PostgreSQL backend (production) ===
+let pgPool;
+if (isProd) {
+  const { Pool } = require('pg');
+  pgPool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+}
 
-  CREATE TABLE IF NOT EXISTS messages (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    sender_id INTEGER NOT NULL,
-    receiver_id INTEGER NOT NULL,
-    content TEXT NOT NULL,
-    created_at TEXT DEFAULT (datetime('now')),
-    FOREIGN KEY (sender_id) REFERENCES users(id),
-    FOREIGN KEY (receiver_id) REFERENCES users(id)
-  );
-`);
+// === Schema init ===
+async function initSchema() {
+  if (isProd) {
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        uid TEXT UNIQUE NOT NULL,
+        username TEXT UNIQUE NOT NULL,
+        password_hash TEXT,
+        is_guest INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      CREATE TABLE IF NOT EXISTS friends (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        friend_id INTEGER NOT NULL REFERENCES users(id),
+        status TEXT NOT NULL DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(user_id, friend_id)
+      );
+      CREATE TABLE IF NOT EXISTS messages (
+        id SERIAL PRIMARY KEY,
+        sender_id INTEGER NOT NULL REFERENCES users(id),
+        receiver_id INTEGER NOT NULL REFERENCES users(id),
+        content TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+  } else {
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        uid TEXT UNIQUE NOT NULL,
+        username TEXT UNIQUE NOT NULL,
+        password_hash TEXT,
+        is_guest INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT (datetime('now'))
+      );
+      CREATE TABLE IF NOT EXISTS friends (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        friend_id INTEGER NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        created_at TEXT DEFAULT (datetime('now')),
+        UNIQUE(user_id, friend_id)
+      );
+      CREATE TABLE IF NOT EXISTS messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        sender_id INTEGER NOT NULL,
+        receiver_id INTEGER NOT NULL,
+        content TEXT NOT NULL,
+        created_at TEXT DEFAULT (datetime('now'))
+      );
+    `);
+  }
+}
 
+// === Helpers ===
 function generateUid() {
   return 'U' + crypto.randomBytes(4).toString('hex').toUpperCase();
 }
 
-function createUser(username, passwordHash) {
+function convertSql(sql) {
+  if (!isProd) return sql;
+  let idx = 0;
+  return sql.replace(/\?/g, () => `$${++idx}`);
+}
+
+async function query(sql, params = []) {
+  if (isProd) {
+    const res = await pgPool.query(convertSql(sql), params);
+    return res;
+  }
+  return { rows: sqlite.prepare(sql).all(...params) };
+}
+
+async function get(sql, params = []) {
+  if (isProd) {
+    const res = await pgPool.query(convertSql(sql), params);
+    return res.rows[0] || null;
+  }
+  return sqlite.prepare(sql).get(...params) || null;
+}
+
+async function run(sql, params = []) {
+  if (isProd) {
+    const res = await pgPool.query(convertSql(sql), params);
+    return { changes: res.rowCount, lastInsertRowid: res.rows[0]?.id };
+  }
+  const stmt = sqlite.prepare(sql);
+  const info = stmt.run(...params);
+  return { changes: info.changes, lastInsertRowid: info.lastInsertRowid };
+}
+
+// === Public API ===
+async function createUser(username, passwordHash) {
   const uid = generateUid();
-  const stmt = db.prepare('INSERT INTO users (uid, username, password_hash) VALUES (?, ?, ?)');
-  stmt.run(uid, username, passwordHash);
+  await run('INSERT INTO users (uid, username, password_hash) VALUES (?, ?, ?)', [uid, username, passwordHash]);
   return getUserByUsername(username);
 }
 
-function createGuestUser(username) {
+async function createGuestUser(username) {
   const uid = generateUid();
-  const stmt = db.prepare('INSERT INTO users (uid, username, is_guest) VALUES (?, ?, 1)');
-  stmt.run(uid, username);
+  await run('INSERT INTO users (uid, username, is_guest) VALUES (?, ?, 1)', [uid, username]);
   return getUserByUsername(username);
 }
 
-function getUserByUsername(username) {
-  return db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+async function getUserByUsername(username) {
+  return get('SELECT * FROM users WHERE username = ?', [username]);
 }
 
-function getUserById(id) {
-  return db.prepare('SELECT id, uid, username, is_guest, created_at FROM users WHERE id = ?').get(id);
+async function getUserById(id) {
+  return get('SELECT id, uid, username, is_guest, created_at FROM users WHERE id = ?', [id]);
 }
 
-function searchUsers(keyword, excludeId) {
-  return db.prepare(
-    `SELECT id, uid, username, is_guest, created_at FROM users
-     WHERE (username LIKE ? OR uid LIKE ?) AND id != ?
-     ORDER BY username ASC LIMIT 20`
-  ).all(`%${keyword}%`, `%${keyword}%`, excludeId);
+async function searchUsers(keyword, excludeId) {
+  const like = isProd ? 'ILIKE' : 'LIKE';
+  const rows = await query(
+    `SELECT id, uid, username, is_guest, created_at FROM users WHERE (username ${like} ? OR uid ${like} ?) AND id != ? ORDER BY username ASC LIMIT 20`,
+    [`%${keyword}%`, `%${keyword}%`, excludeId]
+  );
+  return rows.rows;
 }
 
-function getUsersByIds(ids) {
-  if (ids.length === 0) return [];
-  const placeholders = ids.map(() => '?').join(',');
-  return db.prepare(`SELECT id, uid, username FROM users WHERE id IN (${placeholders})`).all(...ids);
-}
-
-function sendFriendRequest(userId, friendId) {
-  const existing = db.prepare(
-    'SELECT * FROM friends WHERE user_id = ? AND friend_id = ?'
-  ).get(userId, friendId);
+async function sendFriendRequest(userId, friendId) {
+  const existing = await get('SELECT * FROM friends WHERE user_id = ? AND friend_id = ?', [userId, friendId]);
   if (existing) return existing;
 
-  const reverse = db.prepare(
-    'SELECT * FROM friends WHERE user_id = ? AND friend_id = ?'
-  ).get(friendId, userId);
+  const reverse = await get('SELECT * FROM friends WHERE user_id = ? AND friend_id = ?', [friendId, userId]);
   if (reverse) {
     if (reverse.status === 'pending') {
-      db.prepare('UPDATE friends SET status = ? WHERE id = ?').run('accepted', reverse.id);
+      await run('UPDATE friends SET status = ? WHERE id = ?', ['accepted', reverse.id]);
       return { status: 'accepted', id: reverse.id };
     }
     return reverse;
   }
 
-  db.prepare('INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, ?)').run(userId, friendId, 'pending');
+  await run('INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, ?)', [userId, friendId, 'pending']);
   return { status: 'pending' };
 }
 
-function getFriendRequests(userId) {
-  return db.prepare(
-    `SELECT u.id, u.uid, u.username, f.created_at
-     FROM friends f JOIN users u ON f.user_id = u.id
-     WHERE f.friend_id = ? AND f.status = 'pending'`
-  ).all(userId);
+async function getFriendRequests(userId) {
+  const res = await query(
+    `SELECT u.id, u.uid, u.username, f.created_at FROM friends f JOIN users u ON f.user_id = u.id WHERE f.friend_id = ? AND f.status = 'pending'`,
+    [userId]
+  );
+  return res.rows;
 }
 
-function getFriends(userId) {
-  const sent = db.prepare(
-    `SELECT u.id, u.uid, u.username, f.created_at
-     FROM friends f JOIN users u ON f.friend_id = u.id
-     WHERE f.user_id = ? AND f.status = 'accepted'`
-  ).all(userId);
-
-  const received = db.prepare(
-    `SELECT u.id, u.uid, u.username, f.created_at
-     FROM friends f JOIN users u ON f.user_id = u.id
-     WHERE f.friend_id = ? AND f.status = 'accepted'`
-  ).all(userId);
-
-  return [...sent, ...received];
+async function getFriends(userId) {
+  const sent = await query(
+    `SELECT u.id, u.uid, u.username, f.created_at FROM friends f JOIN users u ON f.friend_id = u.id WHERE f.user_id = ? AND f.status = 'accepted'`,
+    [userId]
+  );
+  const received = await query(
+    `SELECT u.id, u.uid, u.username, f.created_at FROM friends f JOIN users u ON f.user_id = u.id WHERE f.friend_id = ? AND f.status = 'accepted'`,
+    [userId]
+  );
+  return [...sent.rows, ...received.rows];
 }
 
-function acceptFriendRequest(userId, friendId) {
-  const result = db.prepare(
-    'UPDATE friends SET status = ? WHERE user_id = ? AND friend_id = ? AND status = ?'
-  ).run('accepted', friendId, userId, 'pending');
-
+async function acceptFriendRequest(userId, friendId) {
+  const result = await run(
+    'UPDATE friends SET status = ? WHERE user_id = ? AND friend_id = ? AND status = ?',
+    ['accepted', friendId, userId, 'pending']
+  );
   return result.changes > 0;
 }
 
-function declineFriendRequest(userId, friendId) {
-  const result = db.prepare(
-    'DELETE FROM friends WHERE user_id = ? AND friend_id = ? AND status = ?'
-  ).run(friendId, userId, 'pending');
+async function declineFriendRequest(userId, friendId) {
+  const result = await run(
+    'DELETE FROM friends WHERE user_id = ? AND friend_id = ? AND status = ?',
+    [friendId, userId, 'pending']
+  );
   return result.changes > 0;
 }
 
-function saveMessage(senderId, receiverId, content) {
-  db.prepare('INSERT INTO messages (sender_id, receiver_id, content) VALUES (?, ?, ?)').run(senderId, receiverId, content);
+async function saveMessage(senderId, receiverId, content) {
+  await run('INSERT INTO messages (sender_id, receiver_id, content) VALUES (?, ?, ?)', [senderId, receiverId, content]);
 }
 
-function getMessages(userId, friendId, limit = 50) {
-  return db.prepare(
-    `SELECT * FROM messages
-     WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
-     ORDER BY created_at DESC LIMIT ?`
-  ).all(userId, friendId, friendId, userId, limit).reverse();
+async function getMessages(userId, friendId, limit = 50) {
+  const res = await query(
+    `SELECT * FROM messages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?) ORDER BY created_at DESC LIMIT ?`,
+    [userId, friendId, friendId, userId, limit]
+  );
+  return res.rows.reverse();
 }
 
-function getFriendStatus(userId, friendId) {
-  const row = db.prepare(
-    'SELECT status FROM friends WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)'
-  ).get(userId, friendId, friendId, userId);
+async function getFriendStatus(userId, friendId) {
+  const row = await get(
+    'SELECT status FROM friends WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)',
+    [userId, friendId, friendId, userId]
+  );
   return row ? row.status : null;
 }
 
+initSchema();
+
 module.exports = {
-  createUser, getUserByUsername, getUserById, searchUsers, getUsersByIds, createGuestUser,
+  createUser, getUserByUsername, getUserById, searchUsers, createGuestUser,
   sendFriendRequest, getFriendRequests, getFriends, acceptFriendRequest, declineFriendRequest,
   saveMessage, getMessages, getFriendStatus,
 };
