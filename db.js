@@ -89,7 +89,6 @@ function sendFriendRequest(userId, friendId) {
   if (reverse) {
     if (reverse.status === 'pending') {
       db.prepare('UPDATE friends SET status = ? WHERE id = ?').run('accepted', reverse.id);
-      db.prepare('INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, ?)').run(userId, friendId, 'accepted');
       return { status: 'accepted', id: reverse.id };
     }
     return reverse;
@@ -128,9 +127,6 @@ function acceptFriendRequest(userId, friendId) {
     'UPDATE friends SET status = ? WHERE user_id = ? AND friend_id = ? AND status = ?'
   ).run('accepted', friendId, userId, 'pending');
 
-  if (result.changes > 0) {
-    db.prepare('INSERT OR IGNORE INTO friends (user_id, friend_id, status) VALUES (?, ?, ?)').run(userId, friendId, 'accepted');
-  }
   return result.changes > 0;
 }
 
