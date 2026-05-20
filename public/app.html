@@ -3,69 +3,71 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>我的社区</title>
+<title>MyCommunity</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font:14px/1.5 system-ui,sans-serif;background:#1a1a2e;color:#eee;display:flex;min-height:100vh}
+html{scroll-behavior:smooth}
+body{font:14px/1.5 system-ui,sans-serif;background:#1a1a2e;color:#eee;display:flex}
 /* Sidebar */
-#sidebar{width:200px;background:#0f3460;display:flex;flex-direction:column;flex-shrink:0}
+#sidebar{position:fixed;left:0;top:0;bottom:0;width:200px;background:#0f3460;display:flex;flex-direction:column;z-index:50}
 #logo{padding:20px 16px;font-size:1.2rem;font-weight:700;color:#e94560;border-bottom:1px solid #1a1a40}
-#nav{flex:1;padding:8px 0}
+#nav{flex:1;padding:8px 0;overflow-y:auto}
 .nav-item{padding:12px 20px;cursor:pointer;display:flex;align-items:center;gap:10px;color:#aaa;transition:.2s;border-left:3px solid transparent}
 .nav-item:hover{background:#1a1a40;color:#eee}
 .nav-item.active{background:#1a1a40;color:#e94560;border-left-color:#e94560}
 .nav-item .badge{background:#e94560;color:#fff;font-size:.7rem;padding:1px 7px;border-radius:10px;margin-left:auto}
 /* Main */
-#main{flex:1;display:flex;flex-direction:column;min-width:0}
-#topbar{display:flex;align-items:center;justify-content:flex-end;padding:12px 24px;background:#16213e;border-bottom:1px solid #1a1a40;gap:12px}
+#main{margin-left:200px;flex:1;min-height:100vh;display:flex;flex-direction:column}
+#topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:flex-end;padding:12px 32px;background:#16213ee0;backdrop-filter:blur(8px);border-bottom:1px solid #1a1a40;gap:12px}
 #user-info{display:flex;align-items:center;gap:10px}
 #user-info .uid{color:#666;font-size:.8rem}
-.btn{padding:6px 16px;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;transition:.2s}
+.btn{padding:6px 16px;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;transition:.2s;display:inline-flex;align-items:center;gap:4px}
 .btn-primary{background:#e94560;color:#fff}
 .btn-primary:hover{background:#c73650}
 .btn-ghost{background:transparent;color:#e94560;border:1px solid #e94560}
 .btn-ghost:hover{background:#e94560;color:#fff}
 .btn-sm{font-size:.8rem;padding:4px 10px}
-/* Content */
-#content{flex:1;padding:24px;overflow-y:auto}
-.section{display:none}
-.section.active{display:block}
-h2{font-size:1.2rem;margin-bottom:16px;color:#e94560}
+/* Sections */
+section{padding:48px 48px 80px;min-height:100vh}
+section:nth-child(even){background:#15152a}
+.section-title{font-size:1.6rem;color:#e94560;margin-bottom:8px}
+.section-sub{color:#666;margin-bottom:32px;font-size:.95rem}
 /* Home */
-.home-welcome{text-align:center;padding:60px 20px}
-.home-welcome h1{font-size:2rem;color:#e94560;margin-bottom:12px}
-.home-welcome p{color:#888;max-width:500px;margin:0 auto 24px}
-.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;max-width:700px;margin:0 auto}
-.feature-card{background:#0f3460;border-radius:10px;padding:20px;text-align:center}
-.feature-card .icon{font-size:2rem;margin-bottom:8px}
+#sec-home{display:flex;flex-direction:column;justify-content:center;text-align:center;min-height:100vh}
+#sec-home h1{font-size:2.8rem;color:#e94560;margin-bottom:12px}
+#sec-home p{color:#888;max-width:520px;margin:0 auto 32px;font-size:1.05rem}
+.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;max-width:640px;margin:0 auto}
+.feature-card{background:#0f3460;border-radius:12px;padding:24px 16px;text-align:center;transition:.3s}
+.feature-card:hover{transform:translateY(-4px);background:#1a1a50}
+.feature-card .icon{font-size:2.2rem;margin-bottom:8px}
 .feature-card h3{font-size:1rem;margin-bottom:4px}
-.feature-card p{color:#888;font-size:.85rem}
-/* Friends layout */
-.friends-layout{display:flex;gap:20px;height:calc(100vh - 140px)}
-.friends-sidebar{width:260px;flex-shrink:0;background:#16213e;border-radius:10px;padding:16px;display:flex;flex-direction:column}
+.feature-card p{color:#888;font-size:.82rem}
+#home-user-info{color:#888;margin-bottom:24px}
+/* Friends section */
+#sec-friends .friends-layout{display:flex;gap:24px;height:520px}
+.friends-sidebar{width:300px;flex-shrink:0;background:#16213e;border-radius:12px;padding:16px;display:flex;flex-direction:column}
 .friends-sidebar .tabs{display:flex;gap:4px;margin-bottom:12px;background:#0f3460;border-radius:8px;padding:3px}
-.friends-sidebar .tabs .tab{flex:1;text-align:center;padding:6px;border-radius:6px;cursor:pointer;font-size:.8rem;color:#888;transition:.2s}
+.friends-sidebar .tabs .tab{flex:1;text-align:center;padding:7px;border-radius:6px;cursor:pointer;font-size:.82rem;color:#888;transition:.2s}
 .friends-sidebar .tabs .tab.active{background:#e94560;color:#fff}
 .friends-sidebar .tabs .tab:hover:not(.active){color:#eee}
 .friends-sidebar .tab-content{flex:1;overflow-y:auto}
-.friend-item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:6px;cursor:pointer;transition:.2s;margin-bottom:2px}
+.tab-content .no-data{text-align:center;color:#555;padding:40px 0;font-size:.85rem}
+.friend-item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:6px;transition:.2s;margin-bottom:2px}
 .friend-item:hover{background:#0f3460}
 .friend-item .name{font-size:.9rem}
-.friend-item .uid-text{color:#666;font-size:.75rem;margin-left:6px}
-.search-area{padding:8px 0}
+.friend-item .uid-text{color:#555;font-size:.75rem;margin-left:6px}
 .search-area input{width:100%;padding:8px 12px;border:none;border-radius:6px;background:#0f3460;color:#eee;font-size:.85rem;outline:none;margin-bottom:8px}
 .search-area input::placeholder{color:#555}
 .search-result{padding:8px 10px;background:#0f3460;border-radius:6px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between}
-.no-data{text-align:center;color:#555;padding:40px 0;font-size:.9rem}
-/* Chat */
-.chat-layout{display:flex;gap:20px;height:calc(100vh - 140px)}
-.chat-friends{width:220px;flex-shrink:0;background:#16213e;border-radius:10px;padding:12px;overflow-y:auto}
+/* Chat section */
+#sec-chat .chat-layout{display:flex;gap:24px;height:520px}
+.chat-friends{width:220px;flex-shrink:0;background:#16213e;border-radius:12px;padding:12px;overflow-y:auto}
 .chat-friends .cf-item{padding:10px 12px;border-radius:6px;cursor:pointer;transition:.2s;margin-bottom:2px}
 .chat-friends .cf-item:hover{background:#0f3460}
 .chat-friends .cf-item.active{background:#0f3460;border-left:3px solid #e94560}
 .chat-friends .cf-item .cf-name{font-size:.9rem}
 .chat-friends .cf-item .cf-uid{color:#555;font-size:.75rem}
-.chat-area{flex:1;background:#16213e;border-radius:10px;display:flex;flex-direction:column;min-width:0}
+.chat-area{flex:1;background:#16213e;border-radius:12px;display:flex;flex-direction:column;min-width:0}
 .chat-header{padding:14px 20px;border-bottom:1px solid #1a1a40;font-weight:600}
 .chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:6px}
 .chat-input-area{display:flex;gap:8px;padding:12px 16px;border-top:1px solid #1a1a40}
@@ -76,13 +78,30 @@ h2{font-size:1.2rem;margin-bottom:16px;color:#e94560}
 .msg-bubble.received{background:#0f3460;align-self:flex-start;border-bottom-left-radius:4px}
 .msg-bubble .msg-time{font-size:.65rem;color:rgba(255,255,255,.5);margin-top:3px;text-align:right}
 .msg-bubble.received .msg-time{color:#666}
-.chat-placeholder{flex:1;display:flex;align-items:center;justify-content:center;color:#555;font-size:.95rem}
-@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.chat-placeholder{flex:1;display:flex;align-items:center;justify-content:center;color:#555;font-size:.9rem}
+/* Games section */
+#sec-games .games-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px}
+.game-card{background:#16213e;border-radius:12px;padding:24px;text-align:center;transition:.3s;cursor:pointer}
+.game-card:hover{transform:translateY(-4px);background:#1a1a50}
+.game-card .icon{font-size:3rem;margin-bottom:10px}
+.game-card h3{font-size:1.05rem;margin-bottom:6px}
+.game-card p{color:#888;font-size:.85rem;margin-bottom:12px}
+.game-card .play-area{background:#0f3460;border-radius:8px;padding:16px;margin-top:8px}
+.game-card .play-area .choice{font-size:2.5rem;margin:8px;cursor:pointer;transition:.2s;display:inline-block}
+.game-card .play-area .choice:hover{transform:scale(1.2)}
+.game-card .play-area .result{font-size:.95rem;margin-top:8px;color:#e94560;font-weight:600}
+/* RPS */
+.rps-choices{display:flex;justify-content:center;gap:12px;margin:8px 0}
+.rps-btn{width:60px;height:60px;border-radius:50%;border:2px solid #333;background:#0f3460;font-size:1.6rem;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center}
+.rps-btn:hover{border-color:#e94560;transform:scale(1.1)}
+.rps-btn.selected{border-color:#e94560;background:#1a1a50}
+.rps-result{font-size:1rem;min-height:1.5em}
+.rps-score{color:#888;font-size:.85rem;margin-top:4px}
 /* Modal */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);align-items:center;justify-content:center;z-index:100}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);align-items:center;justify-content:center;z-index:200}
 .modal-overlay.show{display:flex}
 .modal{background:#16213e;border-radius:12px;padding:28px;width:360px;max-width:92vw}
-.modal h2{text-align:center;margin-bottom:20px}
+.modal h2{text-align:center;margin-bottom:20px;color:#e94560}
 .modal .form-group{margin-bottom:14px}
 .modal label{display:block;color:#aaa;margin-bottom:4px;font-size:.85rem}
 .modal input{width:100%;padding:9px 12px;border:none;border-radius:6px;background:#0f3460;color:#eee;font-size:.9rem;outline:none}
@@ -91,6 +110,7 @@ h2{font-size:1.2rem;margin-bottom:16px;color:#e94560}
 .modal .switch-link{text-align:center;margin-top:12px;color:#888;font-size:.85rem;cursor:pointer}
 .modal .switch-link:hover{color:#e94560}
 .modal .modal-error{background:#3d1a1a;color:#ff6b6b;padding:6px 10px;border-radius:6px;margin-bottom:12px;font-size:.8rem;display:none}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 </style>
 </head>
 <body>
@@ -98,9 +118,10 @@ h2{font-size:1.2rem;margin-bottom:16px;color:#e94560}
 <div id="sidebar">
   <div id="logo">MyCommunity</div>
   <div id="nav">
-    <div class="nav-item active" data-section="home">🏠 首页</div>
-    <div class="nav-item" data-section="friends" id="nav-friends">👥 好友</div>
-    <div class="nav-item" data-section="chat" id="nav-chat">💬 消息</div>
+    <div class="nav-item active" data-target="home">🏠 首页</div>
+    <div class="nav-item" data-target="friends">👥 好友</div>
+    <div class="nav-item" data-target="chat">💬 消息</div>
+    <div class="nav-item" data-target="games">🎮 游戏</div>
   </div>
 </div>
 
@@ -108,69 +129,118 @@ h2{font-size:1.2rem;margin-bottom:16px;color:#e94560}
   <div id="topbar">
     <div id="user-info"></div>
   </div>
-  <div id="content">
-    <!-- Home -->
-    <div class="section active" id="sec-home">
-      <div class="home-welcome" id="home-guest">
-        <h1>欢迎来到 MyCommunity</h1>
-        <p>一个简洁的社区平台，添加好友，实时聊天。</p>
-        <div style="display:flex;gap:12px;justify-content:center">
-          <button class="btn btn-primary" onclick="showModal('login')">登录</button>
-          <button class="btn btn-ghost" onclick="showModal('register')">注册</button>
-          <button class="btn btn-ghost" onclick="guestLogin()">游客体验</button>
-        </div>
-      </div>
-      <div class="home-welcome" id="home-user" style="display:none">
-        <h1>欢迎回来</h1>
-        <p id="home-user-info"></p>
-        <div class="features" style="margin-top:24px">
-          <div class="feature-card"><div class="icon">👥</div><h3>好友</h3><p>搜索添加好友，建立社交圈</p></div>
-          <div class="feature-card"><div class="icon">💬</div><h3>消息</h3><p>与好友实时私聊</p></div>
-        </div>
+
+  <!-- Home -->
+  <section id="sec-home">
+    <div id="home-guest">
+      <h1>欢迎来到 MyCommunity</h1>
+      <p>结交好友，实时聊天，还有小游戏等你来玩。</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="showModal('login')">登录</button>
+        <button class="btn btn-ghost" onclick="showModal('register')">注册</button>
+        <button class="btn btn-ghost" onclick="guestLogin()">游客体验</button>
       </div>
     </div>
-    <!-- Friends -->
-    <div class="section" id="sec-friends">
-      <div class="friends-layout">
-        <div class="friends-sidebar">
-          <div class="tabs">
-            <div class="tab active" data-ftab="list">我的好友</div>
-            <div class="tab" data-ftab="requests" id="tab-requests">请求 <span id="req-badge" style="display:none;background:#e94560;color:#fff;border-radius:10px;padding:0 6px;font-size:.7rem;margin-left:2px">0</span></div>
-            <div class="tab" data-ftab="search">添加</div>
-          </div>
-          <div class="tab-content" id="ftab-list">
-            <div class="no-data">暂无好友</div>
-          </div>
-          <div class="tab-content" id="ftab-requests" style="display:none">
-            <div class="no-data">暂无请求</div>
-          </div>
-          <div class="tab-content" id="ftab-search" style="display:none">
-            <div class="search-area">
-              <input id="search-input" placeholder="搜索用户名..." oninput="searchUsers(this.value)">
-              <div id="search-results"></div>
-            </div>
-          </div>
-        </div>
+    <div id="home-user" style="display:none">
+      <h1>欢迎回来</h1>
+      <p id="home-user-info"></p>
+      <div class="features">
+        <div class="feature-card"><div class="icon">👥</div><h3>好友</h3><p>搜索添加好友，建立社交圈</p></div>
+        <div class="feature-card"><div class="icon">💬</div><h3>消息</h3><p>与好友实时私聊</p></div>
+        <div class="feature-card"><div class="icon">🎮</div><h3>游戏</h3><p>休闲小游戏放松一下</p></div>
       </div>
     </div>
-    <!-- Chat -->
-    <div class="section" id="sec-chat">
-      <div class="chat-layout">
-        <div class="chat-friends" id="chat-friends-list">
-          <div class="no-data" style="padding:20px">暂无好友</div>
+  </section>
+
+  <!-- Friends -->
+  <section id="sec-friends">
+    <h2 class="section-title">👥 好友</h2>
+    <p class="section-sub">管理你的好友关系</p>
+    <div class="friends-layout">
+      <div class="friends-sidebar">
+        <div class="tabs">
+          <div class="tab active" data-ftab="list">我的好友</div>
+          <div class="tab" data-ftab="requests" id="tab-requests">请求 <span id="req-badge" style="display:none;background:#e94560;color:#fff;border-radius:10px;padding:0 6px;font-size:.7rem;margin-left:2px">0</span></div>
+          <div class="tab" data-ftab="search">添加</div>
         </div>
-        <div class="chat-area" id="chat-area">
-          <div class="chat-header" id="chat-header">选择一个好友开始聊天</div>
-          <div class="chat-placeholder" id="chat-placeholder">👈 从左侧选择一个好友</div>
-          <div class="chat-messages" id="chat-messages" style="display:none"></div>
-          <div class="chat-input-area" id="chat-input-area" style="display:none">
-            <input id="chat-input" placeholder="输入消息..." onkeydown="if(event.key==='Enter')sendMessage()">
-            <button class="btn btn-primary btn-sm" onclick="sendMessage()">发送</button>
+        <div class="tab-content" id="ftab-list"><div class="no-data">暂无好友</div></div>
+        <div class="tab-content" id="ftab-requests" style="display:none"><div class="no-data">暂无请求</div></div>
+        <div class="tab-content" id="ftab-search" style="display:none">
+          <div class="search-area">
+            <input id="search-input" placeholder="搜索用户名或UID..." oninput="searchUsers(this.value)">
+            <div id="search-results"></div>
           </div>
         </div>
       </div>
     </div>
-  </div>
+  </section>
+
+  <!-- Chat -->
+  <section id="sec-chat">
+    <h2 class="section-title">💬 消息</h2>
+    <p class="section-sub">与好友实时私聊</p>
+    <div class="chat-layout">
+      <div class="chat-friends" id="chat-friends-list"><div class="no-data" style="padding:20px">暂无好友</div></div>
+      <div class="chat-area" id="chat-area">
+        <div class="chat-header" id="chat-header">选择一个好友开始聊天</div>
+        <div class="chat-placeholder" id="chat-placeholder">👈 从左侧选择一个好友</div>
+        <div class="chat-messages" id="chat-messages" style="display:none"></div>
+        <div class="chat-input-area" id="chat-input-area" style="display:none">
+          <input id="chat-input" placeholder="输入消息..." onkeydown="if(event.key==='Enter')sendMessage()">
+          <button class="btn btn-primary btn-sm" onclick="sendMessage()">发送</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Games -->
+  <section id="sec-games">
+    <h2 class="section-title">🎮 游戏</h2>
+    <p class="section-sub">休闲小游戏，放松一下</p>
+    <div class="games-grid">
+      <div class="game-card">
+        <div class="icon">✂️</div>
+        <h3>石头剪刀布</h3>
+        <p>和电脑对决，三局两胜</p>
+        <div class="play-area">
+          <div class="rps-choices">
+            <button class="rps-btn" onclick="rpsPlay('rock')">🪨</button>
+            <button class="rps-btn" onclick="rpsPlay('scissors')">✂️</button>
+            <button class="rps-btn" onclick="rpsPlay('paper')">📄</button>
+          </div>
+          <div class="rps-result" id="rps-result">点击图标开始</div>
+          <div class="rps-score" id="rps-score">玩家 0 : 0 电脑</div>
+        </div>
+      </div>
+      <div class="game-card">
+        <div class="icon">🎲</div>
+        <h3>猜数字</h3>
+        <p>1-100 之间猜一个数字</p>
+        <div class="play-area">
+          <div style="display:flex;gap:6px;justify-content:center;margin-bottom:6px">
+            <input id="guess-input" type="number" min="1" max="100" placeholder="输入数字" style="width:100px;padding:6px;border:none;border-radius:6px;background:#0f3460;color:#eee;text-align:center;outline:none">
+            <button class="btn btn-primary btn-sm" onclick="guessNumber()">猜</button>
+            <button class="btn btn-ghost btn-sm" onclick="resetGuess()">重置</button>
+          </div>
+          <div id="guess-result" style="color:#888;font-size:.85rem;min-height:1.5em">输入数字开始猜</div>
+          <div id="guess-count" style="color:#555;font-size:.75rem"></div>
+        </div>
+      </div>
+      <div class="game-card">
+        <div class="icon">🪙</div>
+        <h3>抛硬币</h3>
+        <p>猜正反，试试运气</p>
+        <div class="play-area">
+          <div style="font-size:3rem;margin-bottom:6px" id="coin-result">🪙</div>
+          <div style="display:flex;gap:8px;justify-content:center">
+            <button class="btn btn-primary btn-sm" onclick="coinFlip('正面')">正面</button>
+            <button class="btn btn-ghost btn-sm" onclick="coinFlip('反面')">反面</button>
+          </div>
+          <div id="coin-message" style="color:#888;font-size:.85rem;margin-top:6px">选择正反面</div>
+        </div>
+      </div>
+    </div>
+  </section>
 </div>
 
 <!-- Modal -->
@@ -185,10 +255,31 @@ h2{font-size:1.2rem;margin-bottom:16px;color:#e94560}
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
+// === Navigation (scroll) ===
 let currentUser = null;
 let socket = null;
 let selectedChatFriend = null;
 let allFriends = [];
+
+document.querySelectorAll('.nav-item').forEach(el => {
+  el.addEventListener('click', () => {
+    const target = document.getElementById('sec-' + el.dataset.target);
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+
+// Highlight active nav on scroll
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      const id = e.target.id.replace('sec-', '');
+      const nav = document.querySelector(`.nav-item[data-target="${id}"]`);
+      if (nav) nav.classList.add('active');
+    }
+  });
+}, { threshold: 0.3 });
+document.querySelectorAll('section').forEach(s => observer.observe(s));
 
 // === Init ===
 async function init() {
@@ -204,18 +295,6 @@ async function init() {
 }
 init();
 
-// === Navigation ===
-document.querySelectorAll('.nav-item').forEach(el => {
-  el.addEventListener('click', () => {
-    document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
-    el.classList.add('active');
-    document.querySelectorAll('.section').forEach(e => e.classList.remove('active'));
-    document.getElementById('sec-' + el.dataset.section).classList.add('active');
-    if (el.dataset.section === 'friends') loadFriends();
-    if (el.dataset.section === 'chat') loadChatFriends();
-  });
-});
-
 // === User Info ===
 function renderUserInfo() {
   const el = document.getElementById('user-info');
@@ -228,13 +307,11 @@ function renderUserInfo() {
 
 function renderHome() {
   document.getElementById('home-guest').style.display = currentUser ? 'none' : '';
-  const homeUser = document.getElementById('home-user');
+  const hu = document.getElementById('home-user');
   if (currentUser) {
-    homeUser.style.display = '';
+    hu.style.display = '';
     document.getElementById('home-user-info').innerHTML = `UID: ${currentUser.uid} | 用户名: ${escapeHtml(currentUser.username)}`;
-  } else {
-    homeUser.style.display = 'none';
-  }
+  } else hu.style.display = 'none';
 }
 
 // === Auth ===
@@ -252,53 +329,44 @@ function showModal(type) {
   }
   setTimeout(() => document.getElementById('m-user')?.focus(), 100);
 }
-
 document.getElementById('modal-overlay').addEventListener('click', e => {
   if (e.target === e.currentTarget) document.getElementById('modal-overlay').classList.remove('show');
 });
 
 async function doLogin() {
-  const user = document.getElementById('m-user').value;
-  const pass = document.getElementById('m-pass').value;
-  const res = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:user,password:pass}) });
-  const data = await res.json();
-  if (data.error) return showModalError(data.error);
-  currentUser = data;
+  const u = document.getElementById('m-user').value;
+  const p = document.getElementById('m-pass').value;
+  const r = await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+  const d = await r.json();
+  if (d.error) return showModalError(d.error);
+  currentUser = d;
   document.getElementById('modal-overlay').classList.remove('show');
   renderUserInfo(); renderHome(); connectSocket(); loadFriends();
 }
-
 async function doRegister() {
-  const user = document.getElementById('m-user').value;
-  const pass = document.getElementById('m-pass').value;
-  const res = await fetch('/api/register', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:user,password:pass}) });
-  const data = await res.json();
-  if (data.error) return showModalError(data.error);
-  currentUser = data;
+  const u = document.getElementById('m-user').value;
+  const p = document.getElementById('m-pass').value;
+  const r = await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+  const d = await r.json();
+  if (d.error) return showModalError(d.error);
+  currentUser = d;
   document.getElementById('modal-overlay').classList.remove('show');
   renderUserInfo(); renderHome(); connectSocket(); loadFriends();
 }
-
 async function guestLogin() {
-  const res = await fetch('/api/guest-login', { method:'POST' });
-  const data = await res.json();
-  currentUser = data;
+  const r = await fetch('/api/guest-login',{method:'POST'});
+  const d = await r.json();
+  currentUser = d;
   renderUserInfo(); renderHome(); connectSocket(); loadFriends();
 }
-
 async function logout() {
-  await fetch('/api/logout', { method:'POST' });
+  await fetch('/api/logout',{method:'POST'});
   currentUser = null;
   if (socket) { socket.close(); socket = null; }
-  selectedChatFriend = null;
-  allFriends = [];
+  selectedChatFriend = null; allFriends = [];
   renderUserInfo(); renderHome();
-  document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
-  document.querySelector('.nav-item[data-section="home"]').classList.add('active');
-  document.querySelectorAll('.section').forEach(e => e.classList.remove('active'));
-  document.getElementById('sec-home').classList.add('active');
+  document.getElementById('sec-home').scrollIntoView({behavior:'smooth'});
 }
-
 function showModalError(msg) {
   const el = document.getElementById('modal-error');
   el.textContent = msg; el.style.display = 'block';
@@ -310,106 +378,73 @@ function connectSocket() {
   socket = io();
   socket.on('private message', msg => {
     if (msg.senderId === currentUser.id) {
-      if (selectedChatFriend && selectedChatFriend.id === msg.receiverId) {
-        appendMessage(msg, true);
-      }
-    } else if (selectedChatFriend && selectedChatFriend.id === msg.senderId) {
-      appendMessage(msg, false);
-    }
+      if (selectedChatFriend && selectedChatFriend.id === msg.receiverId) appendMessage(msg, true);
+    } else if (selectedChatFriend && selectedChatFriend.id === msg.senderId) appendMessage(msg, false);
   });
-  socket.on('friend request', data => {
-    loadFriends();
-  });
-  socket.on('friend added', data => {
-    loadFriends(); loadChatFriends();
-  });
+  socket.on('friend request', () => loadFriends());
+  socket.on('friend added', () => { loadFriends(); loadChatFriends(); });
 }
 
 // === Friends ===
 async function loadFriends() {
   if (!currentUser) return;
-  // Active requests count
-  const reqRes = await fetch('/api/friends/requests');
-  const reqData = await reqRes.json();
+  const rr = await fetch('/api/friends/requests');
+  const rd = await rr.json();
   const badge = document.getElementById('req-badge');
-  if (reqData.requests && reqData.requests.length > 0) {
-    badge.textContent = reqData.requests.length;
-    badge.style.display = 'inline';
-  } else {
-    badge.style.display = 'none';
-  }
-
+  if (rd.requests && rd.requests.length > 0) { badge.textContent = rd.requests.length; badge.style.display = 'inline'; }
+  else badge.style.display = 'none';
   const res = await fetch('/api/friends');
   const data = await res.json();
   allFriends = data.friends || [];
   renderFriendList();
   renderFriendRequests();
 }
-
 function renderFriendList() {
   const el = document.getElementById('ftab-list');
-  if (!allFriends.length) {
-    el.innerHTML = '<div class="no-data">暂无好友</div>';
-    return;
-  }
-  el.innerHTML = allFriends.map(f =>
-    `<div class="friend-item"><div><span class="name">${escapeHtml(f.username)}</span><span class="uid-text">${f.uid}</span></div></div>`
-  ).join('');
+  if (!allFriends.length) { el.innerHTML = '<div class="no-data">暂无好友，去"添加"标签页搜索吧</div>'; return; }
+  el.innerHTML = allFriends.map(f => `<div class="friend-item"><div><span class="name">${escapeHtml(f.username)}</span><span class="uid-text">${f.uid}</span></div></div>`).join('');
 }
-
 function renderFriendRequests() {
   fetch('/api/friends/requests').then(r=>r.json()).then(data => {
     const el = document.getElementById('ftab-requests');
-    if (!data.requests || !data.requests.length) {
-      el.innerHTML = '<div class="no-data">暂无好友请求</div>'; return;
-    }
-    el.innerHTML = data.requests.map(f =>
-      `<div class="friend-item"><div><span class="name">${escapeHtml(f.username)}</span><span class="uid-text">${f.uid}</span></div><div style="display:flex;gap:4px"><button class="btn btn-primary btn-sm" onclick="acceptReq(${f.id})">接受</button><button class="btn btn-ghost btn-sm" onclick="declineReq(${f.id})">拒绝</button></div></div>`
-    ).join('');
+    if (!data.requests || !data.requests.length) { el.innerHTML = '<div class="no-data">暂无好友请求</div>'; return; }
+    el.innerHTML = data.requests.map(f => `<div class="friend-item"><div><span class="name">${escapeHtml(f.username)}</span><span class="uid-text">${f.uid}</span></div><div style="display:flex;gap:4px"><button class="btn btn-primary btn-sm" onclick="acceptReq(${f.id})">接受</button><button class="btn btn-ghost btn-sm" onclick="declineReq(${f.id})">拒绝</button></div></div>`).join('');
   });
 }
-
 async function acceptReq(friendId) {
-  await fetch('/api/friends/accept', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({friendId}) });
+  await fetch('/api/friends/accept',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({friendId})});
   loadFriends(); loadChatFriends();
 }
-
 async function declineReq(friendId) {
-  await fetch('/api/friends/decline', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({friendId}) });
+  await fetch('/api/friends/decline',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({friendId})});
   loadFriends();
 }
-
 async function searchUsers(q) {
   const el = document.getElementById('search-results');
   if (!q || q.length < 1) { el.innerHTML = ''; return; }
-  const res = await fetch('/api/users/search?q=' + encodeURIComponent(q));
-  const data = await res.json();
-  if (!data.users || !data.users.length) {
-    el.innerHTML = '<div class="no-data" style="padding:10px">未找到用户</div>'; return;
-  }
-  el.innerHTML = data.users.map(u => {
+  const r = await fetch('/api/users/search?q='+encodeURIComponent(q));
+  const d = await r.json();
+  if (!d.users || !d.users.length) { el.innerHTML = '<div class="no-data" style="padding:10px">未找到用户</div>'; return; }
+  el.innerHTML = d.users.map(u => {
     const isFriend = allFriends.some(f => f.id === u.id);
     const isSelf = u.id === currentUser.id;
     const btn = isSelf ? '' : (isFriend ? '<button class="btn btn-sm" style="background:#333;color:#888;cursor:default" disabled>已是好友</button>' : `<button class="btn btn-primary btn-sm" onclick="addFriend(${u.id})">添加</button>`);
     return `<div class="search-result"><div><span>${escapeHtml(u.username)}</span><span class="uid-text">${u.uid}</span></div>${btn}</div>`;
   }).join('');
 }
-
 async function addFriend(friendId) {
-  const res = await fetch('/api/friends/request', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({friendId}) });
-  const data = await res.json();
-  if (data.error) return alert(data.error);
-  if (data.status === 'accepted') { alert('对方已添加你为好友！'); loadFriends(); loadChatFriends(); }
+  const r = await fetch('/api/friends/request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({friendId})});
+  const d = await r.json();
+  if (d.error) return alert(d.error);
+  if (d.status === 'accepted') { alert('对方已添加你为好友！'); loadFriends(); loadChatFriends(); }
   else alert('好友请求已发送');
 }
-
-// === Friends Layout Tabs ===
 document.querySelectorAll('.friends-sidebar .tabs .tab').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('.friends-sidebar .tabs .tab').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
     document.querySelectorAll('.friends-sidebar .tab-content').forEach(c => c.style.display = 'none');
-    document.getElementById('ftab-' + tab.dataset.ftab).style.display = '';
+    document.getElementById('ftab-'+tab.dataset.ftab).style.display = '';
     if (tab.dataset.ftab === 'requests') renderFriendRequests();
   });
 });
@@ -417,63 +452,84 @@ document.querySelectorAll('.friends-sidebar .tabs .tab').forEach(tab => {
 // === Chat ===
 async function loadChatFriends() {
   if (!currentUser) return;
-  const res = await fetch('/api/friends');
-  const data = await res.json();
-  const friends = data.friends || [];
+  const r = await fetch('/api/friends');
+  const d = await r.json();
+  const friends = d.friends || [];
   const el = document.getElementById('chat-friends-list');
-  if (!friends.length) {
-    el.innerHTML = '<div class="no-data" style="padding:20px">暂无好友</div>';
-    return;
-  }
-  el.innerHTML = friends.map(f =>
-    `<div class="cf-item ${selectedChatFriend && selectedChatFriend.id === f.id ? 'active' : ''}" onclick="selectChatFriend(${f.id},'${escapeHtml(f.username)}','${f.uid}')">
-      <div class="cf-name">${escapeHtml(f.username)}</div>
-      <div class="cf-uid">${f.uid}</div>
-    </div>`
-  ).join('');
+  if (!friends.length) { el.innerHTML = '<div class="no-data" style="padding:20px">暂无好友</div>'; return; }
+  el.innerHTML = friends.map(f => `<div class="cf-item ${selectedChatFriend && selectedChatFriend.id === f.id ? 'active' : ''}" onclick="selectChatFriend(${f.id},'${escapeHtml(f.username)}','${f.uid}')"><div class="cf-name">${escapeHtml(f.username)}</div><div class="cf-uid">${f.uid}</div></div>`).join('');
 }
-
 async function selectChatFriend(friendId, username, uid) {
   selectedChatFriend = { id: friendId, username, uid };
   document.querySelectorAll('.cf-item').forEach(e => e.classList.remove('active'));
-  event.currentTarget.classList.add('active');
+  if (event) event.currentTarget.classList.add('active');
   document.getElementById('chat-header').textContent = `${username} (${uid})`;
   document.getElementById('chat-placeholder').style.display = 'none';
   document.getElementById('chat-messages').style.display = 'flex';
   document.getElementById('chat-input-area').style.display = 'flex';
   document.getElementById('chat-messages').innerHTML = '<div style="text-align:center;color:#555;padding:10px">加载中...</div>';
   document.getElementById('chat-input').focus();
-
-  const res = await fetch(`/api/messages/${friendId}`);
-  const data = await res.json();
+  const r = await fetch(`/api/messages/${friendId}`);
+  const d = await r.json();
   document.getElementById('chat-messages').innerHTML = '';
-  (data.messages || []).forEach(m => {
-    appendMessage(m, m.senderId === currentUser.id);
-  });
+  (d.messages || []).forEach(m => appendMessage(m, m.senderId === currentUser.id));
   scrollChat();
 }
-
 function appendMessage(msg, isSent) {
   const el = document.getElementById('chat-messages');
   const div = document.createElement('div');
-  div.className = `msg-bubble ${isSent ? 'sent' : 'received'}`;
-  const time = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString() : new Date().toLocaleTimeString();
-  div.innerHTML = `${escapeHtml(msg.content)}<div class="msg-time">${time}</div>`;
+  div.className = 'msg-bubble ' + (isSent ? 'sent' : 'received');
+  div.innerHTML = `${escapeHtml(msg.content)}<div class="msg-time">${new Date(msg.createdAt).toLocaleTimeString()}</div>`;
   el.appendChild(div);
   scrollChat();
 }
-
-function scrollChat() {
-  const el = document.getElementById('chat-messages');
-  setTimeout(() => el.scrollTop = el.scrollHeight, 50);
-}
-
+function scrollChat() { setTimeout(() => document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight, 50); }
 async function sendMessage() {
   const input = document.getElementById('chat-input');
   const text = input.value.trim();
   if (!text || !selectedChatFriend) return;
   input.value = '';
   socket.emit('private message', { receiverId: selectedChatFriend.id, content: text });
+}
+
+// === Games: RPS ===
+let rpsPlayerScore = 0, rpsCompScore = 0;
+function rpsPlay(player) {
+  const choices = ['rock','scissors','paper'];
+  const emojis = { rock:'🪨', scissors:'✂️', paper:'📄' };
+  const beats = { rock:'scissors', scissors:'paper', paper:'rock' };
+  const comp = choices[Math.floor(Math.random()*3)];
+  document.querySelectorAll('.rps-btn').forEach(b => b.classList.remove('selected'));
+  event.target.classList.add('selected');
+  let result;
+  if (player === comp) result = `平局！双方都出了 ${emojis[comp]}`;
+  else if (beats[player] === comp) { result = `你赢了！${emojis[player]} 胜 ${emojis[comp]}`; rpsPlayerScore++; }
+  else { result = `你输了！${emojis[comp]} 胜 ${emojis[player]}`; rpsCompScore++; }
+  document.getElementById('rps-result').textContent = result;
+  document.getElementById('rps-score').textContent = `玩家 ${rpsPlayerScore} : ${rpsCompScore} 电脑`;
+}
+
+// === Games: Guess Number ===
+let guessTarget = Math.floor(Math.random()*100)+1, guessCount = 0;
+function guessNumber() {
+  const input = document.getElementById('guess-input');
+  const val = parseInt(input.value);
+  if (!val || val < 1 || val > 100) { document.getElementById('guess-result').textContent = '请输入 1-100 的数字'; return; }
+  guessCount++;
+  let msg;
+  if (val === guessTarget) msg = `🎉 猜对了！就是 ${guessTarget}，用了 ${guessCount} 次`;
+  else if (val < guessTarget) msg = `⬆️ 小了，再大一点 (第 ${guessCount} 次)`;
+  else msg = `⬇️ 大了，再小一点 (第 ${guessCount} 次)`;
+  document.getElementById('guess-result').textContent = msg;
+  if (val === guessTarget) { guessTarget = Math.floor(Math.random()*100)+1; guessCount = 0; }
+}
+function resetGuess() { guessTarget = Math.floor(Math.random()*100)+1; guessCount = 0; document.getElementById('guess-input').value = ''; document.getElementById('guess-result').textContent = '已重置，重新猜吧'; document.getElementById('guess-count').textContent = ''; }
+
+// === Games: Coin Flip ===
+function coinFlip(guess) {
+  const result = Math.random() < 0.5 ? '正面' : '反面';
+  document.getElementById('coin-result').textContent = result === '正面' ? '😀' : '😶';
+  document.getElementById('coin-message').textContent = result === guess ? `🎉 是${result}，你猜对了！` : `😔 是${result}，你猜错了`;
 }
 
 // === Utils ===
