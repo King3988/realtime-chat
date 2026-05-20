@@ -194,6 +194,14 @@ app.put('/api/admin/users/:id/xp', requireAdmin, async (req, res) => {
   res.json({ ok: true });
 });
 
+app.put('/api/admin/users/:id/password', requireAdmin, async (req, res) => {
+  const { password } = req.body;
+  if (!password || password.length < 4) return res.status(400).json({ error: '密码至少 4 位' });
+  const hash = bcrypt.hashSync(password, SALT_ROUNDS);
+  await db.updateUserPassword(parseInt(req.params.id), hash);
+  res.json({ ok: true });
+});
+
 app.use((req, res, next) => {
   if (req.method === 'GET' && !req.path.startsWith('/api') && !req.path.startsWith('/socket.io')) {
     return res.sendFile(path.join(__dirname, 'public', 'app.html'));

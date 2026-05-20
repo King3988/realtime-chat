@@ -259,6 +259,10 @@ async function updateUserXp(userId, xp) {
   await run('UPDATE users SET xp = ? WHERE id = ?', [target, userId]);
 }
 
+async function updateUserPassword(userId, hash) {
+  await run('UPDATE users SET password_hash = ? WHERE id = ?', [hash, userId]);
+}
+
 initSchema();
 
 module.exports = {
@@ -266,5 +270,5 @@ module.exports = {
   sendFriendRequest, getFriendRequests, getFriends, acceptFriendRequest, declineFriendRequest,
   saveMessage, getMessages, getFriendStatus,
   addXp, levelForXp, xpForNextLevel, XP_MULTIPLIER,
-  getAllUsers, updateUserRole, updateUserXp,
+  getAllUsers, updateUserRole, updateUserXp, updateUserPassword,
 };
