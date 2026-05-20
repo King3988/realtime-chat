@@ -134,6 +134,35 @@ section:nth-child(even){background:rgba(255,255,255,.02)}
 .mine-lb .r1{color:var(--yellow)}
 .mine-lb .r2{color:#c0c0c0}
 .mine-lb .r3{color:#cd7f32}
+/* Poker */
+.pkr-card{display:inline-flex;align-items:center;justify-content:center;width:40px;height:56px;border-radius:6px;font-size:1rem;font-weight:700;background:#fff;color:#222;box-shadow:0 2px 6px rgba(0,0,0,.4);border:1px solid #ccc;position:relative}
+.pkr-card .s{font-size:.65rem;position:absolute;bottom:3px}
+.pkr-card .t{font-size:.7rem;position:absolute;top:3px;left:5px}
+.pkr-card .b{font-size:.7rem;position:absolute;bottom:3px;right:5px;transform:rotate(180deg)}
+.pkr-card.red{color:#d32f2f}
+.pkr-card.back{background:linear-gradient(135deg,#8f51ea,#fe53bb);color:transparent;border-color:transparent;box-shadow:0 2px 8px rgba(142,81,234,.4)}
+.pkr-seat{background:var(--bg-card);border-radius:10px;padding:8px 12px;border:1px solid #333;text-align:center;min-width:100px;transition:.2s;font-size:.82rem}
+.pkr-seat.active{border-color:var(--accent);box-shadow:0 0 12px rgba(254,83,186,.3)}
+.pkr-seat.dealer{border-color:var(--yellow)}
+.pkr-seat .name{color:#eee;font-weight:600}
+.pkr-seat .chips{color:var(--yellow);font-size:.75rem}
+.pkr-seat .bet{color:#888;font-size:.7rem}
+.pkr-seat .hand{color:var(--accent);font-size:.75rem}
+.pkr-seat .won{color:#4caf50;font-size:.75rem}
+.pkr-seat.folded{opacity:.4}
+.pkr-seat .hole{display:flex;gap:3px;justify-content:center;margin-top:4px}
+.pkr-seat .hole .pkr-card{width:28px;height:38px;font-size:.7rem}
+.pkr-seat .hole .pkr-card .s{font-size:.5rem}
+.pkr-seat .hole .pkr-card .t,.pkr-seat .hole .pkr-card .b{font-size:.55rem}
+.pkr-btn{padding:6px 14px;font-size:.82rem;border-radius:5rem;border:1px solid #333;cursor:pointer;transition:.2s;background:var(--bg-card);color:#eee;font-family:inherit}
+.pkr-btn:hover{background:#333}
+.pkr-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.pkr-btn.primary:hover{background:#e045a0}
+.pkr-btn.danger{background:#c0392b;color:#fff;border-color:#c0392b}
+.pkr-btn:disabled{opacity:.4;cursor:default}
+#poker-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.pkr-raise-input{width:80px;padding:4px 8px;border:1px solid #333;border-radius:5rem;background:var(--bg-card);color:#eee;text-align:center;font-size:.82rem;outline:none;font-family:inherit}
+.pkr-raise-input:focus{border-color:var(--accent)}
 /* Admin */
 #sec-admin .admin-table-wrap{overflow-x:auto;background:var(--bg-secondary);border-radius:12px;padding:16px;border:1px solid #333}
 #sec-admin table{width:100%;border-collapse:collapse;font-size:.85rem}
@@ -244,7 +273,7 @@ section:nth-child(even){background:rgba(255,255,255,.02)}
     <!-- Game entry -->
     <div id="game-selection" class="game-grid">
       <div class="game-card" onclick="enterGame('minesweeper')"><div class="icon">💣</div><h3>扫雷</h3><p>经典扫雷</p></div>
-      <div class="game-card" style="opacity:.4;cursor:default"><div class="icon">🃏</div><h3>更多</h3><p>即将推出</p></div>
+      <div class="game-card" onclick="enterGame('poker')"><div class="icon">🃏</div><h3>德州扑克</h3><p>在线对战</p></div>
     </div>
     <!-- Minesweeper sub-page -->
     <div id="mine-game">
@@ -270,6 +299,37 @@ section:nth-child(even){background:rgba(255,255,255,.02)}
         <div id="lb-content"><div class="no-data" style="padding:20px;text-align:center;color:#555">暂无记录</div></div>
       </div>
     </div>
+    <!-- Poker sub-page -->
+    <div id="poker-game" style="display:none;flex-direction:column;align-items:center;gap:10px">
+      <div class="mine-header">
+        <button class="btn btn-ghost btn-sm" onclick="exitGame()">← 返回</button>
+        <span style="color:#888;font-size:.85rem" id="poker-title">德州扑克</span>
+      </div>
+      <!-- Lobby -->
+      <div id="poker-lobby" style="width:100%;max-width:500px">
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <input id="poker-nick" style="display:none" placeholder="你的昵称">
+          <button class="btn btn-primary btn-sm" onclick="pokerCreate()">创建房间</button>
+        </div>
+        <div id="poker-room-list"><div class="no-data" style="text-align:center;color:#555;padding:20px">暂无房间，点击上方创建</div></div>
+      </div>
+      <!-- Table -->
+      <div id="poker-table" style="display:none;flex-direction:column;align-items:center;gap:8px;width:100%;max-width:640px">
+        <div id="poker-msg" style="color:#888;font-size:.85rem;min-height:1.5em;text-align:center"></div>
+        <!-- Players area -->
+        <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;width:100%" id="poker-players"></div>
+        <!-- Community cards -->
+        <div style="display:flex;gap:6px;min-height:52px;align-items:center;justify-content:center;padding:8px;background:var(--bg-card);border-radius:10px;border:1px solid #333;width:100%">
+          <span id="poker-community" style="display:flex;gap:6px"></span>
+          <span id="poker-pot" style="color:#ffdb3b;font-size:.85rem;margin-left:8px"></span>
+        </div>
+        <!-- My cards -->
+        <div id="poker-my-cards" style="display:flex;gap:6px;min-height:52px"></div>
+        <!-- Controls -->
+        <div id="poker-controls" style="display:none;gap:6px;flex-wrap:wrap;justify-content:center"></div>
+        <div id="poker-info" style="color:#555;font-size:.8rem;text-align:center;max-width:500px"></div>
+      </div>
+    </div>
   </section>
 
   <section id="sec-admin">
@@ -277,7 +337,7 @@ section:nth-child(even){background:rgba(255,255,255,.02)}
     <p class="section-sub">用户管理</p>
     <div class="admin-table-wrap">
       <table>
-        <thead><tr><th>ID</th><th>UID</th><th>用户名</th><th>角色</th><th>等级</th><th>经验</th><th>状态</th><th>操作</th></tr></thead>
+        <thead><tr><th>ID</th><th>UID</th><th>用户名</th><th>角色</th><th>等级</th><th>经验</th><th>金币</th><th>状态</th><th>操作</th></tr></thead>
         <tbody id="admin-user-list"></tbody>
       </table>
     </div>
@@ -341,7 +401,8 @@ function renderUserInfo() {
     return;
   }
   const lv = currentUser.level || 1;
-  el.innerHTML = `${roleHtml(currentUser.role)} <span>${escapeHtml(currentUser.username)}</span><span class="uid">${currentUser.uid}</span><span class="xp-text">Lv.${lv} (${currentUser.xp||0}XP)</span><button class="btn btn-ghost btn-sm" onclick="logout()">退出</button>`;
+  const coins = currentUser.coins !== undefined ? currentUser.coins : '?';
+  el.innerHTML = `${roleHtml(currentUser.role)} <span>${escapeHtml(currentUser.username)}</span><span class="uid">${currentUser.uid}</span><span class="xp-text">Lv.${lv} (${currentUser.xp||0}XP)</span><span style="color:#ffdb3b;font-size:.78rem">🪙${coins}</span><button class="btn btn-ghost btn-sm" onclick="doCheckin()">签到</button><button class="btn btn-ghost btn-sm" onclick="logout()">退出</button>`;
 }
 
 function renderHome() {
@@ -419,6 +480,7 @@ function connectSocket() {
   socket.on('friend request', () => loadFriends());
   socket.on('friend added', () => { loadFriends(); loadChatFriends(); });
   socket.on('banned', () => { alert('你已被封禁'); logout(); });
+  socket.on('poker update', (data) => { pokerState = data; if (pokerRoom) pokerRender(); });
 }
 
 async function loadFriends() {
@@ -511,20 +573,6 @@ async function sendMessage() {
   if (!text||!selectedChatFriend) return;
   input.value = '';
   socket.emit('private message', {receiverId:selectedChatFriend.id, content:text});
-}
-
-// Game navigation
-function enterGame(game) {
-  document.getElementById('game-selection').style.display = 'none';
-  if (game === 'minesweeper') {
-    document.getElementById('mine-game').style.display = 'flex';
-    setDifficulty('easy');
-  }
-}
-function exitGame() {
-  document.getElementById('game-selection').style.display = '';
-  document.getElementById('mine-game').style.display = 'none';
-  if (msTimer) { clearInterval(msTimer); msTimer = null; }
 }
 
 // Minesweeper
@@ -711,7 +759,7 @@ async function loadAdmin() {
   if (!currentUser||currentUser.role!=='admin') return;
   const r = await fetch('/api/admin/users'), d = await r.json();
   const tbody = document.getElementById('admin-user-list');
-  if (!d.users||!d.users.length) { tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:#555">暂无用户</td></tr>'; return; }
+  if (!d.users||!d.users.length) { tbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:#555">暂无用户</td></tr>'; return; }
   tbody.innerHTML = d.users.map(u => {
     const isSelf = u.id === currentUser.id;
     const isAdmin = u.role === 'admin';
@@ -725,9 +773,11 @@ async function loadAdmin() {
       </select></td>
       <td>Lv.${u.level||1}</td>
       <td><input class="xp-input" type="number" value="${u.xp||0}" id="xp-${u.id}" min="0" ${!canEdit?'disabled':''}></td>
+      <td><input class="xp-input" type="number" value="${u.coins||0}" id="coin-${u.id}" min="0" ${!canEdit?'disabled':''} style="width:80px"></td>
       <td>${u.banned ? '<span style="color:#fe53bb;font-weight:600">封禁</span>' : '<span style="color:#4caf50">正常</span>'}</td>
       <td style="display:flex;gap:4px;flex-wrap:wrap">
         ${canEdit ? `<button class="btn btn-primary btn-sm" onclick="saveXp(${u.id})">保存</button>` : ''}
+        ${canEdit ? `<button class="btn btn-ghost btn-sm" onclick="saveCoins(${u.id})">🪙</button>` : ''}
         ${u.banned ? `<button class="btn btn-ghost btn-sm" onclick="unbanUser(${u.id})">解封</button>`
           : (isSelf ? '' : `<button class="btn btn-sm btn-danger" onclick="banUser(${u.id})">封禁</button>`)}
       </td>
@@ -753,7 +803,185 @@ async function unbanUser(id) {
   await fetch(`/api/admin/users/${id}/unban`,{method:'POST',headers:{'Content-Type':'application/json'}});
   loadAdmin();
 }
-// Re-observe admin section for lazy load
+// === Coins ===
+async function doCheckin() {
+  const r = await fetch('/api/checkin',{method:'POST'});
+  const d = await r.json();
+  if (d.error) return alert(d.error||'今日已签到');
+  alert(`签到成功 +${d.reward} 🪙`);
+  currentUser.coins = d.coins;
+  renderUserInfo();
+}
+async function saveCoins(id) {
+  const coins = parseInt(document.getElementById('coin-'+id).value);
+  await fetch(`/api/admin/users/${id}/coins`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({coins})});
+  loadAdmin();
+}
+
+// === Poker ===
+let pokerRoom = null, pokerState = null;
+const SUIT_SYM = {c:'♣',d:'♦',h:'♥',s:'♠'};
+
+function cardHtml(card, small) {
+  if (!card) return '';
+  const r=card[0], s=card[1], red=(s==='d'||s==='h');
+  const cls=small?'pkr-card small':'pkr-card';
+  return `<div class="${cls} ${red?'red':''}"><span class="t">${r}</span><span class="s">${SUIT_SYM[s]}</span></div>`;
+}
+function cardBack(small) {
+  return `<div class="pkr-card back ${small?'small':''}"><span class="t">?</span><span class="s">?</span></div>`;
+}
+
+function pokerCreate() {
+  socket.emit('poker create', {sb:10,bb:20}, (res) => {
+    if (res.error) return alert(res.error);
+    pokerRoom = res.roomId;
+    pokerState = res.game;
+    pokerEnterTable();
+  });
+}
+function pokerRefreshList() {
+  socket.emit('poker list', (res) => {
+    const el = document.getElementById('poker-room-list');
+    if (!res.rooms||!res.rooms.length) { el.innerHTML = '<div class="no-data" style="text-align:center;color:#555;padding:20px">暂无房间，点击上方创建</div>'; return; }
+    el.innerHTML = res.rooms.map(r => `<div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg-card);padding:10px 14px;border-radius:8px;margin-bottom:6px;border:1px solid #333">
+      <div><span style="color:#eee">房间 #${r.roomId}</span><span style="color:#888;font-size:.78rem;margin-left:8px">${r.players}/6 · SB${r.sb}/BB${r.bb}</span></div>
+      <button class="btn btn-primary btn-sm" onclick="pokerJoin('${r.roomId}')">加入</button>
+    </div>`).join('');
+  });
+}
+function pokerJoin(roomId) {
+  socket.emit('poker join', {roomId}, (res) => {
+    if (res.error) return alert(res.error);
+    pokerRoom = roomId;
+    pokerState = res.game;
+    pokerEnterTable();
+  });
+}
+function pokerLeave() {
+  socket.emit('poker leave');
+  pokerRoom = null; pokerState = null;
+  document.getElementById('poker-table').style.display = 'none';
+  document.getElementById('poker-lobby').style.display = '';
+  pokerRefreshList();
+}
+function pokerEnterTable() {
+  document.getElementById('poker-lobby').style.display = 'none';
+  document.getElementById('poker-table').style.display = 'flex';
+  pokerRender();
+}
+function pokerStart() {
+  socket.emit('poker start', (res) => {
+    if (res&&res.error) alert(res.error);
+  });
+}
+function pokerAction(action, amount) {
+  socket.emit('poker action', {action, amount}, (res) => {
+    if (res&&res.error) alert(res.error);
+  });
+}
+
+function pokerRender() {
+  const s = pokerState;
+  if (!s) return;
+  document.getElementById('poker-title').textContent = `德州扑克 · 房间 ${s.roomId}`;
+  // Pot
+  const totalPot = s.pots ? s.pots.reduce((a,p)=>a+p.amount,0) : s.players.reduce((a,p)=>a+p.betTotal,0);
+  document.getElementById('poker-pot').textContent = totalPot > 0 ? `底池: ${totalPot}` : '';
+  // Community
+  const comm = document.getElementById('poker-community');
+  comm.innerHTML = s.community.map(c => s.phase==='preflop'||s.phase==='waiting'?'':cardHtml(c)).join('') || '<span style="color:#555;font-size:.82rem">等待发牌</span>';
+  // My cards
+  const me = s.players.find(p=>p.isViewer);
+  const myCards = document.getElementById('poker-my-cards');
+  if (me && me.hole && me.hole.length) {
+    myCards.innerHTML = me.hole.map(c => cardHtml(c)).join('');
+  } else { myCards.innerHTML = ''; }
+  // Players
+  const pArea = document.getElementById('poker-players');
+  pArea.innerHTML = s.players.map((p,i) => {
+    const isDealer = i === s.dealerIdx;
+    const isActive = s.actionOn === p.id && !p.folded && s.phase !== 'showdown' && s.phase !== 'waiting';
+    const cls = ['pkr-seat', isActive?'active':'', isDealer?'dealer':'', p.folded?'folded':''].filter(Boolean).join(' ');
+    let holeHtml = '';
+    if (p.isViewer) {
+      holeHtml = ''; // Shown in my-cards
+    } else if (s.phase==='showdown' && !p.folded && p.hole && p.hole.length) {
+      holeHtml = `<div class="hole">${p.hole.map(c=>cardHtml(c,true)).join('')}</div>`;
+    } else if (!p.folded && s.phase!=='waiting') {
+      holeHtml = `<div class="hole">${cardBack(true)}${cardBack(true)}</div>`;
+    }
+    return `<div class="${cls}"><div class="name">${escapeHtml(p.username)}${isDealer?' D':''}</div>
+      <div class="chips">🪙${p.chips}</div>
+      ${p.betTotal>0?`<div class="bet">下注 ${p.betTotal}</div>`:''}
+      ${p.allIn?'<div style="color:var(--accent);font-size:.75rem">ALL-IN</div>':''}
+      ${p.handName?`<div class="hand">${p.handName}</div>`:''}
+      ${p.wonPot?`<div class="won">+${p.wonPot}</div>`:''}
+      ${holeHtml}</div>`;
+  }).join('');
+  // Controls
+  const ctrl = document.getElementById('poker-controls');
+  if (s.phase==='waiting') {
+    const isHost = s.hostId === (currentUser ? currentUser.id : null);
+    ctrl.style.display = 'flex';
+    ctrl.innerHTML = `<button class="pkr-btn danger" onclick="pokerLeave()">离开房间</button>
+      ${isHost ? `<button class="pkr-btn primary" onclick="pokerStart()">开始游戏</button>` : '<span style="color:#555;font-size:.82rem">等待房主开始...</span>'}`;
+    document.getElementById('poker-info').textContent = '等待中...';
+  } else if (me && !me.folded && s.actionOn === (currentUser?currentUser.id:null)) {
+    ctrl.style.display = 'flex';
+    const callAmt = s.currentBet - (me.betTotal||0);
+    const canCheck = callAmt === 0;
+    const canCall = callAmt > 0 && callAmt <= me.chips;
+    const minRaise = s.currentBet + Math.max(s.minRaise, s.bb);
+    const maxRaise = me.chips + me.betTotal;
+    let actions = `<button class="pkr-btn danger" onclick="pokerAction('fold')">弃牌</button>`;
+    if (canCheck) actions += `<button class="pkr-btn" onclick="pokerAction('check')">让牌</button>`;
+    else if (canCall) actions += `<button class="pkr-btn" onclick="pokerAction('call')">跟注 ${callAmt}</button>`;
+    if (maxRaise > s.currentBet) {
+      actions += `<input class="pkr-raise-input" type="number" id="pkr-raise-amt" value="${Math.min(minRaise,maxRaise)}" min="${Math.min(minRaise,maxRaise)}" max="${maxRaise}">`;
+      actions += `<button class="pkr-btn primary" onclick="pokerAction('raise',document.getElementById('pkr-raise-amt').value)">加注</button>`;
+      actions += `<button class="pkr-btn" onclick="pokerAction('allin')">ALL-IN (${me.chips})</button>`;
+    }
+    ctrl.innerHTML = actions;
+    document.getElementById('poker-info').textContent = '轮到你行动';
+  } else if (me && !me.folded && me.allIn) {
+    ctrl.style.display = 'flex';
+    ctrl.innerHTML = `<span style="color:#888;font-size:.85rem">已全下，等待牌局结束</span>`;
+    document.getElementById('poker-info').textContent = '';
+  } else if (me && me.folded) {
+    ctrl.style.display = 'flex';
+    ctrl.innerHTML = `<span style="color:#888;font-size:.85rem">你已弃牌</span>`;
+    document.getElementById('poker-info').textContent = '';
+  } else {
+    ctrl.style.display = 'flex';
+    ctrl.innerHTML = `<span style="color:#888;font-size:.85rem">等待其他玩家行动...</span>`;
+    if (s.phase==='showdown') document.getElementById('poker-info').textContent = '';
+    else document.getElementById('poker-info').textContent = s.phase==='waiting'?'':`${s.phase==='preflop'?'翻牌前':s.phase==='flop'?'翻牌':s.phase==='turn'?'转牌':'河牌'}圈`;
+  }
+}
+
+function enterGame(game) {
+  document.getElementById('game-selection').style.display = 'none';
+  if (game==='poker') {
+    document.getElementById('poker-game').style.display = 'flex';
+    document.getElementById('poker-table').style.display = 'none';
+    document.getElementById('poker-lobby').style.display = '';
+    pokerRefreshList();
+  } else if (game==='minesweeper') {
+    document.getElementById('mine-game').style.display = 'flex';
+    setDifficulty('easy');
+  }
+}
+
+function exitGame() {
+  document.getElementById('game-selection').style.display = '';
+  document.getElementById('mine-game').style.display = 'none';
+  document.getElementById('poker-game').style.display = 'none';
+  if (pokerRoom) { socket.emit('poker leave'); pokerRoom=null; pokerState=null; }
+  if (msTimer) { clearInterval(msTimer); msTimer = null; }
+}
+
+function escapeHtml(str) { const d=document.createElement('div'); d.textContent=str; return d.innerHTML; }
 const adminObserver = new IntersectionObserver(entries => {
   entries.forEach(e => { if (e.isIntersecting && currentUser && currentUser.role === 'admin') loadAdmin(); });
 }, {threshold:0.3});

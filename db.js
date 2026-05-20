@@ -46,9 +46,8 @@ async function initSchema() {
         created_at TIMESTAMP DEFAULT NOW()
       );
     `);
-    await pgPool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user'`);
-    await pgPool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS xp INTEGER DEFAULT 0`);
-    await pgPool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS banned INTEGER DEFAULT 0`);
+    await pgPool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS coins INTEGER DEFAULT 500`);
+    await pgPool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_checkin DATE`);
   } else {
     sqlite.exec(`
       CREATE TABLE IF NOT EXISTS users (
@@ -60,6 +59,8 @@ async function initSchema() {
         role TEXT DEFAULT 'user',
         xp INTEGER DEFAULT 0,
         banned INTEGER DEFAULT 0,
+        coins INTEGER DEFAULT 500,
+        last_checkin TEXT,
         created_at TEXT DEFAULT (datetime('now'))
       );
       CREATE TABLE IF NOT EXISTS friends (
@@ -82,6 +83,8 @@ async function initSchema() {
     if (!cols.includes('role')) sqlite.exec("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'");
     if (!cols.includes('xp')) sqlite.exec("ALTER TABLE users ADD COLUMN xp INTEGER DEFAULT 0");
     if (!cols.includes('banned')) sqlite.exec("ALTER TABLE users ADD COLUMN banned INTEGER DEFAULT 0");
+    if (!cols.includes('coins')) sqlite.exec("ALTER TABLE users ADD COLUMN coins INTEGER DEFAULT 500");
+    if (!cols.includes('last_checkin')) sqlite.exec("ALTER TABLE users ADD COLUMN last_checkin TEXT");
   }
 }
 
@@ -160,7 +163,7 @@ async function getUserByUsername(username) {
 }
 
 async function getUserById(id) {
-  return get('SELECT id, uid, username, is_guest, role, xp, created_at FROM users WHERE id = ?', [id]);
+  return get('SELECT id, uid, username, is_guest, role, xp, coins, created_at FROM users WHERE id = ?', [id]);
 }
 
 async function searchUsers(keyword, excludeId) {
@@ -247,7 +250,7 @@ async function getFriendStatus(userId, friendId) {
 async function getAllUsers(page = 1, limit = 50) {
   const offset = (page - 1) * limit;
   const rows = await query(
-    `SELECT id, uid, username, is_guest, role, xp, banned, created_at FROM users ORDER BY id ASC LIMIT ? OFFSET ?`,
+    `SELECT id, uid, username, is_guest, role, xp, coins, banned, created_at FROM users ORDER BY id ASC LIMIT ? OFFSET ?`,
     [limit, offset]
   );
   const countRow = await get('SELECT COUNT(*) as total FROM users');
@@ -289,6 +292,37 @@ async function deleteAllGuests() {
   return guests.rows.length;
 }
 
+// === Coins ===
+async function getUserCoins(userId) {
+  const row = await get('SELECT coins FROM users WHERE id = ?', [userId]);
+  return row ? row.coins : 0;
+}
+
+async function updateUserCoins(userId, amount) {
+  await run('UPDATE users SET coins = ? WHERE id = ?', [amount, userId]);
+}
+
+async function addCoins(userId, delta) {
+  await run('UPDATE users SET coins = MAX(0, coins + ?) WHERE id = ?', [delta, userId]);
+  const row = await get('SELECT coins FROM users WHERE id = ?', [userId]);
+  return row ? row.coins : 0;
+}
+
+async function getCheckinStatus(userId) {
+  const row = await get('SELECT last_checkin FROM users WHERE id = ?', [userId]);
+  const today = new Date().toISOString().slice(0, 10);
+  return { checkedIn: row && row.last_checkin === today, today };
+}
+
+async function doCheckin(userId) {
+  const status = await getCheckinStatus(userId);
+  if (status.checkedIn) return null;
+  const reward = 200;
+  await run('UPDATE users SET coins = coins + ?, last_checkin = ? WHERE id = ?', [reward, status.today, userId]);
+  const row = await get('SELECT coins FROM users WHERE id = ?', [userId]);
+  return { reward, coins: row.coins };
+}
+
 initSchema();
 
 module.exports = {
@@ -298,4 +332,5 @@ module.exports = {
   addXp, levelForXp, xpForNextLevel, XP_MULTIPLIER,
   getAllUsers, updateUserRole, updateUserXp, updateUserPassword, deleteUser,
   banUser, unbanUser, deleteAllGuests,
+  getUserCoins, updateUserCoins, addCoins, getCheckinStatus, doCheckin,
 };
