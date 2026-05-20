@@ -218,25 +218,6 @@ section:nth-child(even){background:rgba(255,255,255,.02)}
 .chess-info{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center;font-size:.85rem;color:#888}
 .chess-ctrl{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 @media(max-width:480px){.chess-board{grid-template-columns:repeat(9,34px);grid-template-rows:repeat(10,34px)}.chess-pc{width:28px;height:28px;font-size:.9rem}.chess-cell{width:34px;height:34px}}
-/* Chinese Chess */
-#chess-game{display:none;flex-direction:column;align-items:center;gap:10px;width:100%}
-.chess-board{display:grid;grid-template-columns:repeat(9,44px);grid-template-rows:repeat(10,44px);gap:0;background:#d4a454;padding:4px;border-radius:6px;border:3px solid #8b6914;position:relative}
-.chess-cell{width:44px;height:44px;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;font-size:.75rem;color:#8b6914;user-select:none}
-.chess-cell::before{content:'';position:absolute;width:100%;height:100%;pointer-events:none}
-.chess-cell .h-line{position:absolute;top:50%;left:0;right:0;height:1px;background:#8b6914;transform:translateY(-50%)}
-.chess-cell .v-line{position:absolute;left:50%;top:0;bottom:0;width:1px;background:#8b6914;transform:translateX(-50%)}
-.chess-board .river{position:absolute;top:calc(44px*4+2px);left:0;right:0;height:44px;display:flex;align-items:center;justify-content:center;color:#8b6914;font-size:.85rem;letter-spacing:8px;pointer-events:none;z-index:1;font-style:italic}
-.chess-pc{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;cursor:pointer;z-index:2;position:relative;border:2px solid #5a3e0a;box-shadow:1px 1px 3px rgba(0,0,0,.3)}
-.chess-pc.red{background:linear-gradient(135deg,#fdd,#fbb);color:#c00;border-color:#c00}
-.chess-pc.black{background:linear-gradient(135deg,#ddd,#bbb);color:#111;border-color:#333}
-.chess-pc.selected{box-shadow:0 0 0 3px #ffeb3b,0 0 12px #ffeb3b}
-.chess-pc.legal{box-shadow:0 0 0 3px rgba(76,175,80,.8);cursor:pointer;animation:pulse 1s infinite}
-@keyframes pulse{0%{box-shadow:0 0 0 3px rgba(76,175,80,.8)}50%{box-shadow:0 0 0 6px rgba(76,175,80,.4)}100%{box-shadow:0 0 0 3px rgba(76,175,80,.8)}}
-.chess-pc.last-move{opacity:.7}
-#chess-info{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center;font-size:.85rem;color:#888}
-#chess-controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
-.chess-cell.marked::after{content:'';position:absolute;width:12px;height:12px;border-radius:50%;background:rgba(76,175,80,.4);pointer-events:none;z-index:1}
-@media(max-width:480px){.chess-board{grid-template-columns:repeat(9,34px);grid-template-rows:repeat(10,34px)}.chess-pc{width:28px;height:28px;font-size:.9rem}.chess-cell{width:34px;height:34px}}
 </style>
 </head>
 <body>
@@ -251,31 +232,7 @@ section:nth-child(even){background:rgba(255,255,255,.02)}
     <div class="nav-item hidden" data-target="admin" id="nav-admin">🔧 管理</div>
     </div>
     </div>
-    <!-- Chinese Chess sub-page -->
-    <div id="chess-game">
-      <div class="mine-header">
-        <button class="btn btn-ghost btn-sm" onclick="exitGame()">← 返回</button>
-        <span style="color:#888;font-size:.85rem" id="chess-title">中国象棋</span>
-      </div>
-      <!-- Lobby -->
-      <div id="chess-lobby" style="width:100%;max-width:500px">
-        <div style="display:flex;gap:8px;margin-bottom:12px">
-          <button class="btn btn-primary btn-sm" onclick="chessCreate()">创建房间</button>
-        </div>
-        <div id="chess-room-list"><div class="no-data" style="text-align:center;color:#555;padding:20px">暂无房间，点击上方创建</div></div>
-      </div>
-      <!-- Table -->
-      <div id="chess-table" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%">
-        <div class="chess-info">
-          <span id="chess-turn"></span>
-          <span id="chess-result" style="color:#ffdb3b"></span>
-        </div>
-        <div class="chess-board" id="chess-board"></div>
-        <div class="chess-ctrl" id="chess-ctrl"></div>
-        <div class="chess-info" id="chess-players"></div>
-      </div>
-    </div>
-  </section>
+  </div>
 
   <section id="sec-friends">
     <h2 class="section-title">👥 好友</h2>
@@ -385,6 +342,30 @@ section:nth-child(even){background:rgba(255,255,255,.02)}
         <!-- Controls -->
         <div id="poker-controls" style="display:none;gap:6px;flex-wrap:wrap;justify-content:center"></div>
         <div id="poker-info" style="color:#555;font-size:.8rem;text-align:center;max-width:500px"></div>
+      </div>
+    </div>
+    <!-- Chinese Chess sub-page -->
+    <div id="chess-game" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%">
+      <div class="mine-header">
+        <button class="btn btn-ghost btn-sm" onclick="exitGame()">← 返回</button>
+        <span style="color:#888;font-size:.85rem" id="chess-title">中国象棋</span>
+      </div>
+      <!-- Lobby -->
+      <div id="chess-lobby" style="width:100%;max-width:500px">
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <button class="btn btn-primary btn-sm" onclick="chessCreate()">创建房间</button>
+        </div>
+        <div id="chess-room-list"><div class="no-data" style="text-align:center;color:#555;padding:20px">暂无房间，点击上方创建</div></div>
+      </div>
+      <!-- Table -->
+      <div id="chess-table" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%">
+        <div class="chess-info">
+          <span id="chess-turn"></span>
+          <span id="chess-result" style="color:#ffdb3b"></span>
+        </div>
+        <div class="chess-board" id="chess-board"></div>
+        <div class="chess-ctrl" id="chess-ctrl"></div>
+        <div class="chess-info" id="chess-players"></div>
       </div>
     </div>
   </section>
