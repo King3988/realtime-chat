@@ -440,6 +440,10 @@ class PokerGame {
   }
 
   goToShowdown() {
+    // Deal remaining community cards (early all-in scenario)
+    for (let i = this.community.length; i < 5 && this.deck.length > 0; i++) {
+      this.community.push(this.deck.pop());
+    }
     this.phase='showdown';
     this.calcSidePots();
     // Evaluate all non-folded hands
