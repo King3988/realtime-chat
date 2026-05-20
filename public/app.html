@@ -912,18 +912,18 @@ function pokerRender() {
   document.getElementById('poker-title').textContent = `德州扑克 · 房间 ${s.roomId}`;
   const me = s.players.find(p=>p.isViewer);
   // Phase indicator
-  const phaseNames = {waiting:'等待中',preflop:'翻牌前',flop:'翻牌圈',turn:'转牌圈',river:'河牌圈',showdown:'摊牌'};
+  const phaseNames = {waiting:'等待中',preflop:'翻牌前',flop:'翻牌圈',turn:'转牌圈',river:'河牌圈',showdown:'摊牌',settle:'结算中'};
   document.getElementById('poker-phase').textContent = phaseNames[s.phase]||'';
   // Pot
   const totalPot = s.pots ? s.pots.reduce((a,p)=>a+p.amount,0) : s.players.reduce((a,p)=>a+p.betTotal,0);
   document.getElementById('poker-pot').textContent = totalPot > 0 ? `底池 ${totalPot}` : '';
-  // Deck (show when game is in progress)
+  // Deck (show when game is in progress, hide during showdown/settle)
   const deckEl = document.getElementById('poker-deck');
-  deckEl.style.display = (s.phase!=='waiting'&&s.phase!=='showdown') ? 'inline-flex' : 'none';
+  deckEl.style.display = (s.phase==='preflop'||s.phase==='flop'||s.phase==='turn'||s.phase==='river') ? 'inline-flex' : 'none';
   // Community cards
   const comm = document.getElementById('poker-community');
   if (s.phase==='preflop'||s.phase==='waiting') comm.innerHTML = '<span style="color:rgba(255,255,255,.3);font-size:.75rem">等待发牌</span>';
-  else comm.innerHTML = s.community.map(c => cardHtml(c)).join('') || '';
+  else comm.innerHTML = s.community.map(c => cardHtml(c)).join('') || '<span style="color:rgba(255,255,255,.3);font-size:.75rem">无公共牌</span>';
   // My cards
   const myCards = document.getElementById('poker-my-cards');
   myCards.innerHTML = (me && me.hole && me.hole.length) ? me.hole.map(c => cardHtml(c)).join('') : '';
@@ -940,19 +940,19 @@ function pokerRender() {
   seats.innerHTML = sorted.map((p,i) => {
     const pos = SPAWN[i]||{top:'50%',left:'50%'};
     const isDealer = p.id===s.players[s.dealerIdx]?.id;
-    const isActive = s.actionOn===p.id && !p.folded && s.phase!=='showdown' && s.phase!=='waiting';
+    const isActive = s.actionOn===p.id && !p.folded && s.phase!=='showdown' && s.phase!=='settle' && s.phase!=='waiting';
     const cls = ['pkr-seat', isActive?'active':'', isDealer?'dealer':'', p.folded?'folded':''].filter(Boolean).join(' ');
     let holeHtml='';
     if (p.isViewer) holeHtml='';
-    else if (s.phase==='showdown'&&!p.folded&&p.hole&&p.hole.length) holeHtml=`<div class="hole">${p.hole.map(c=>cardHtml(c,true)).join('')}</div>`;
+    else if ((s.phase==='showdown'||s.phase==='settle')&&!p.folded&&p.hole&&p.hole.length) holeHtml=`<div class="hole">${p.hole.map(c=>cardHtml(c,true)).join('')}</div>`;
     else if (!p.folded&&s.phase!=='waiting') holeHtml=`<div class="hole">${cardBack(true)}${cardBack(true)}</div>`;
     return `<div class="${cls}" style="position:absolute;top:${pos.top};left:${pos.left};transform:translate(-50%,-50%)">
       <div class="name">${escapeHtml(p.username)}${isDealer?' 🎯':''}</div>
       <div class="chips">🪙${p.chips}</div>
-      ${p.betTotal>0?`<div class="bet">下注 ${p.betTotal}</div>`:''}
+      ${p.roundBet>0?`<div class="bet">下注 ${p.roundBet}</div>`:''}
       ${p.allIn?'<div style="color:var(--accent);font-size:.7rem">ALL-IN</div>':''}
       ${p.handName?`<div class="hand">${p.handName}</div>`:''}
-      ${p.wonPot?`<div class="won">+${p.wonPot}</div>`:''}
+      ${p.won?`<div class="won">+${p.won}</div>`:''}
       ${holeHtml}
     </div>`;
   }).join('');
@@ -963,10 +963,14 @@ function pokerRender() {
     ctrl.style.display='flex';
     ctrl.innerHTML=`<button class="pkr-btn danger" onclick="pokerLeave()">离开房间</button>${isHost?'<button class="pkr-btn primary" onclick="pokerStart()">开始游戏</button>':'<span style="color:#555;font-size:.82rem">等待房主开始...</span>'}`;
     document.getElementById('poker-info').textContent='等待中...';
+  } else if (s.phase==='settle') {
+    ctrl.style.display='flex';
+    ctrl.innerHTML=me&&me.won>=0?`<span style="color：#FFD700;font-size:.9rem">你赢了 ${me.won}</span>`:'<span style="color:#888;font-size:.85rem">结算中...</span>';
+    document.getElementById('poker-info').textContent='5秒后下一局';
   } else if (me&&!me.folded&&s.actionOn===(currentUser?currentUser.id:null)) {
     ctrl.style.display='flex';
-    const callAmt=s.currentBet-(me.betTotal||0), canCheck=callAmt===0, canCall=callAmt>0&&callAmt<=me.chips;
-    const minRaise=s.currentBet+Math.max(s.minRaise,s.bb), maxRaise=me.chips+me.betTotal;
+    const callAmt=s.currentBet-(me.roundBet||0), canCheck=callAmt===0, canCall=callAmt>0&&callAmt<=me.chips;
+    const minRaise=s.currentBet+Math.max(s.minRaise,s.bb), maxRaise=me.chips+me.roundBet;
     let acts=`<button class="pkr-btn danger" onclick="pokerAction('fold')">弃牌</button>`;
     if (canCheck) acts+=`<button class="pkr-btn" onclick="pokerAction('check')">让牌</button>`;
     else if (canCall) acts+=`<button class="pkr-btn" onclick="pokerAction('call')">跟注 ${callAmt}</button>`;
@@ -976,7 +980,7 @@ function pokerRender() {
       acts+=`<button class="pkr-btn" onclick="pokerAction('allin')">ALL-IN (${me.chips})</button>`;
     }
     ctrl.innerHTML=acts;
-    document.getElementById('poker-info').textContent='轮到你行动';
+    document.getElementById('poker-info').textContent='轮到你行动 (30s)';
   } else if (me&&me.allIn) {
     ctrl.style.display='flex';
     ctrl.innerHTML='<span style="color:#888;font-size:.85rem">已全下，等待牌局结束</span>';

@@ -16,6 +16,7 @@
     "express": "^5.2.1",
     "express-session": "^1.19.0",
     "pg": "^8.21.0",
+    "pokersolver": "^2.1.4",
     "socket.io": "^4.8.3"
   }
 }

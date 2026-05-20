@@ -248,46 +248,8 @@ app.put('/api/admin/users/:id/coins', requireAdmin, async (req, res) => {
 
 // === Poker Engine ===
 
-const RANK_STR = '..23456789TJQKA';
-const HAND_NAMES = ['','高牌','一对','两对','三条','顺子','同花','葫芦','四条','同花顺','皇家同花顺'];
-
-function pRank(c) { return RANK_STR.indexOf(c[0]); }
-function pSuit(c) { return c[1]; }
-
-function handScore(type, ranks) {
-  return type * 1e10 + (ranks[0]||0)*1e8 + (ranks[1]||0)*1e6 + (ranks[2]||0)*1e4 + (ranks[3]||0)*1e2 + (ranks[4]||0);
-}
-
-function eval5(cards) {
-  const rks = cards.map(pRank).sort((a,b)=>b-a);
-  const flush = cards.every(c=>c[1]===cards[0][1]);
-  const uniq = [...new Set(rks)].sort((a,b)=>b-a);
-  let straight = false, sh = 0;
-  if (uniq.length===5 && uniq[0]-uniq[4]===4) { straight=true; sh=uniq[0]; }
-  if (uniq[0]===14 && uniq[1]===5 && uniq[2]===4 && uniq[3]===3 && uniq[4]===2) { straight=true; sh=5; }
-  const cnt = {}; rks.forEach(r=>cnt[r]=(cnt[r]||0)+1);
-  const grp = Object.entries(cnt).map(([r,c])=>({r:+r,c})).sort((a,b)=>b.c-a.c||b.r-a.r);
-
-  if (flush && straight) return sh===14?{n:10,sc:1000,na:'皇家同花顺'}:{n:9,sc:900+sh,na:'同花顺'};
-  if (grp[0].c===4) return {n:8,sc:800+grp[0].r*15+grp[1].r,na:'四条'};
-  if (grp[0].c===3&&grp[1].c===2) return {n:7,sc:700+grp[0].r*15+grp[1].r,na:'葫芦'};
-  if (flush) return {n:6,sc:handScore(6,rks),na:'同花'};
-  if (straight) return {n:5,sc:500+sh,na:'顺子'};
-  if (grp[0].c===3) return {n:4,sc:400+grp[0].r*15+grp[1].r*10+grp[2].r,na:'三条'};
-  if (grp[0].c===2&&grp[1].c===2) return {n:3,sc:300+grp[0].r*15+grp[1].r*10+grp[2].r,na:'两对'};
-  if (grp[0].c===2) return {n:2,sc:200+grp[0].r*100+grp[1].r*10+grp[2].r,na:'一对'};
-  return {n:1,sc:handScore(1,rks),na:'高牌'};
-}
-
-function bestHand(hole, community) {
-  const all = [...hole,...community]; let best = null;
-  for (let a=0;a<all.length;a++) for (let b=a+1;b<all.length;b++) for (let c=b+1;c<all.length;c++)
-    for (let d=c+1;d<all.length;d++) for (let e=d+1;e<all.length;e++) {
-      const h = eval5([all[a],all[b],all[c],all[d],all[e]]);
-      if (!best||h.sc>best.sc) best = h;
-    }
-  return best;
-}
+const Hand = require('pokersolver').Hand;
+const ACTION_TIMEOUT_MS = 30000;
 
 function createDeck() {
   const suits = ['c','d','h','s'], ranks = '23456789TJQKA';
@@ -311,112 +273,138 @@ class PokerGame {
     this.spectators = [];
     this.deck = [];
     this.community = [];
-    this.phase = 'waiting'; // waiting|preflop|flop|turn|river|showdown
+    this.phase = 'waiting'; // waiting|preflop|flop|turn|river|showdown|settle
     this.pots = [];
     this.currentBet = 0;
     this.minRaise = this.bb;
     this.lastRaise = 0;
     this.dealerIdx = 0;
     this.turnIdx = -1;
-    this.betStartIdx = -1;
     this.actionOn = -1;
-    this.dealCount = 0;
+    this.roundNum = 0;
+    this.actionTimer = null;
   }
+
   addPlayer(user) {
     if (this.players.length>=6) return false;
     if (this.players.find(p=>p.id===user.id)) return false;
-    this.players.push({...user,hole:[],chips:Math.min(1000,user.coins||500),betTotal:0,folded:false,allIn:false,acted:false,seat:this.players.length});
+    this.players.push({...user,hole:[],chips:Math.min(1000,user.coins||500),betTotal:0,roundBet:0,folded:false,allIn:false,acted:false,seat:this.players.length,handResult:null,won:0});
     return true;
   }
+
   removePlayer(userId) {
+    this.clearTimer();
     const idx = this.players.findIndex(p=>p.id===userId);
     if (idx===-1) return;
     this.players.splice(idx,1);
     if (this.players.length===0) this.phase='waiting';
   }
+
   canStart() { return this.players.length>=2&&this.phase==='waiting'; }
+
   start() {
     if (!this.canStart()) return false;
-    this.dealCount++;
+    this.roundNum++;
     // Reset players
-    for (const p of this.players) { p.hole=[]; p.betTotal=0; p.folded=false; p.allIn=false; p.acted=false; p.chips=Math.min(1000,p.chips); }
+    for (const p of this.players) {
+      p.hole=[]; p.betTotal=0; p.roundBet=0; p.folded=false; p.allIn=false; p.acted=false;
+      p.handResult=null; p.won=0; p.chips=Math.min(1000,p.chips);
+    }
     this.community=[]; this.pots=[]; this.currentBet=0; this.lastRaise=0; this.phase='preflop';
 
     // Rotate dealer
-    if (this.dealCount>1) this.dealerIdx=(this.dealerIdx+1)%this.players.length;
+    if (this.roundNum>1) this.dealerIdx=(this.dealerIdx+1)%this.players.length;
 
     // Deal
     this.deck = shuffle(createDeck());
     for (let i=0;i<2;i++) for (const p of this.players) p.hole.push(this.deck.pop());
 
-    // Blinds
-    const active = this.players.filter(p=>!p.folded);
-    const sbIdx = (this.dealerIdx+1)%active.length;
-    const bbIdx = (this.dealerIdx+2)%active.length;
-    this.postBlind(active[sbIdx], this.sb);
-    this.postBlind(active[bbIdx], this.bb);
-    active[sbIdx].acted = true; // SB's blind counts as their preflop action
-    // BB stays acted=false so they get the option when action returns
+    // Blinds (heads-up: dealer=SB, others: dealer+1=SB)
+    const n = this.players.length;
+    let sbIdx, bbIdx;
+    if (n === 2) {
+      sbIdx = this.dealerIdx;
+      bbIdx = (this.dealerIdx + 1) % n;
+    } else {
+      sbIdx = (this.dealerIdx + 1) % n;
+      bbIdx = (this.dealerIdx + 2) % n;
+    }
+    this.postBlind(this.players[sbIdx], this.sb);
+    this.postBlind(this.players[bbIdx], this.bb);
+    this.players[sbIdx].acted = true; // SB's blind counts as their preflop action
     this.currentBet = this.bb;
     this.minRaise = this.bb;
 
-    // Action starts to the left of BB (UTG)
-    this.betStartIdx = (bbIdx+1)%active.length;
-    this.turnIdx = this.betStartIdx;
-    this.actionOn = active[this.turnIdx].id;
+    // Action starts to left of BB (UTG)
+    const utgIdx = (bbIdx+1)%n;
+    this.turnIdx = utgIdx;
+    this.actionOn = this.players[this.turnIdx].id;
+    this.setTimer();
     return true;
   }
+
   postBlind(p, amount) {
     const a = Math.min(amount, p.chips);
-    p.chips -= a; p.betTotal += a;
+    p.chips -= a; p.betTotal += a; p.roundBet += a;
     if (p.chips===0) p.allIn=true;
   }
-  nextActive(fromIdx) {
-    const active = this.players.filter(p=>!p.folded&&!p.allIn);
-    for (let i=1;i<=active.length;i++) {
-      const p = active[(fromIdx+i)%active.length];
-      if (!p.folded&&!p.allIn) return this.players.indexOf(p);
+
+  clearTimer() {
+    if (this.actionTimer) { clearTimeout(this.actionTimer); this.actionTimer = null; }
+  }
+
+  setTimer() {
+    this.clearTimer();
+    const p = this.players.find(pl => pl.id === this.actionOn);
+    if (!p) return;
+    this.actionTimer = setTimeout(() => {
+      p.folded = true; p.acted = true;
+      this.clearTimer();
+      this.afterAction();
+      if (this._notifyUpdate) this._notifyUpdate();
+    }, ACTION_TIMEOUT_MS);
+  }
+
+  nextActingPlayer(fromIdx) {
+    if (fromIdx === undefined) fromIdx = this.turnIdx;
+    const n = this.players.length;
+    for (let i=1;i<=n;i++) {
+      const idx = (fromIdx+i)%n;
+      const p = this.players[idx];
+      if (!p.folded && !p.allIn) return idx;
     }
     return -1;
   }
+
   getActivePlayers() { return this.players.filter(p=>!p.folded); }
+
   getBettingPlayers() { return this.players.filter(p=>!p.folded&&!p.allIn); }
 
-  advanceRound() {
-    if (this.phase==='preflop') { this.phase='flop'; this.community.push(this.deck.pop(),this.deck.pop(),this.deck.pop()); }
-    else if (this.phase==='flop') { this.phase='turn'; this.community.push(this.deck.pop()); }
-    else if (this.phase==='turn') { this.phase='river'; this.community.push(this.deck.pop()); }
-    else return;
-    for (const p of this.players) p.acted=false;
-    this.currentBet = 0;
-    this.lastRaise = 0;
-    this.minRaise = this.bb;
-    const active = this.getBettingPlayers();
-    if (active.length<=1) { this.goToShowdown(); return; }
-    // Action starts from first active player after dealer
-    const dealerP = this.players[this.dealerIdx];
-    let startIdx = (this.players.indexOf(dealerP)+1)%this.players.length;
-    while (this.players[startIdx].folded||this.players[startIdx].allIn) startIdx=(startIdx+1)%this.players.length;
-    this.betStartIdx = startIdx;
-    this.turnIdx = startIdx;
-    this.actionOn = this.players[startIdx].id;
+  getRoundBet(playerId) {
+    const p = this.players.find(pl=>pl.id===playerId);
+    return p ? p.roundBet : 0;
   }
 
   canCheck(userId) {
     const p = this.players.find(pl=>pl.id===userId);
-    return p && !p.folded && !p.allIn && p.betTotal === this.currentBet;
+    return p && !p.folded && !p.allIn && p.roundBet === this.currentBet;
   }
+
   canCall(userId) {
     const p = this.players.find(pl=>pl.id===userId);
-    return p && !p.folded && !p.allIn && p.betTotal < this.currentBet;
+    return p && !p.folded && !p.allIn && p.roundBet < this.currentBet;
   }
+
   canRaise(userId) {
     const p = this.players.find(pl=>pl.id===userId);
-    return p && !p.folded && !p.allIn && p.chips + p.betTotal > this.currentBet;
+    return p && !p.folded && !p.allIn && p.chips + p.roundBet > this.currentBet;
   }
+
   getCallAmount(userId) {
     const p = this.players.find(pl=>pl.id===userId);
-    return p ? Math.min(p.chips, this.currentBet - p.betTotal) : 0;
+    if (!p) return 0;
+    const needed = this.currentBet - p.roundBet;
+    return Math.min(p.chips, needed);
   }
 
   calcSidePots() {
@@ -431,7 +419,6 @@ class PokerGame {
       this.pots.push({amount:slice*eligible.length, eligible: eligible.map(p=>p.id)});
       prevTotal = ap.betTotal;
     }
-    // Main pot for remaining
     const remaining = involved.filter(p=>!p.allIn||p.betTotal>prevTotal);
     if (remaining.length>0) {
       const extra = remaining.reduce((s,p)=>s+(p.betTotal-prevTotal),0);
@@ -440,48 +427,116 @@ class PokerGame {
   }
 
   goToShowdown() {
-    // Deal remaining community cards (early all-in scenario)
+    // Deal remaining community cards
     for (let i = this.community.length; i < 5 && this.deck.length > 0; i++) {
       this.community.push(this.deck.pop());
     }
     this.phase='showdown';
     this.calcSidePots();
-    // Evaluate all non-folded hands
+
+    // Evaluate non-folded hands using pokersolver
+    const hands = {};
     for (const p of this.players) {
-      if (!p.folded) p.handResult = bestHand(p.hole, this.community);
-    }
-    // Distribute pots
-    for (const pot of this.pots) {
-      const candidates = pot.eligible.map(id=>this.players.find(p=>p.id===id)).filter(Boolean);
-      let best = null, winners = [];
-      for (const p of candidates) {
-        if (!p.handResult) continue;
-        if (!best||p.handResult.sc>best.sc) { best=p.handResult; winners=[p]; }
-        else if (p.handResult.sc===best.sc) winners.push(p);
+      if (!p.folded) {
+        hands[p.id] = Hand.solve([...p.hole, ...this.community]);
       }
-      const share = Math.floor(pot.amount/winners.length);
-      for (const w of winners) { w.chips += share; w.wonPot = (w.wonPot||0)+share; }
-      // Remainder to first winner
-      if (winners.length>0) winners[0].chips += pot.amount - share*winners.length;
+    }
+
+    // Distribute each pot
+    for (const pot of this.pots) {
+      const candidates = pot.eligible.map(id=>this.players.find(p=>p.id===id)).filter(p=>p&&!p.folded);
+      if (candidates.length===0) continue;
+      const hList = candidates.map(p=>hands[p.id]).filter(Boolean);
+      if (hList.length===0) continue;
+      const winners = Hand.winners(hList);
+      const winnerPlayers = candidates.filter(p => winners.some(w => w===hands[p.id]));
+      if (winnerPlayers.length===0) continue;
+      const share = Math.floor(pot.amount / winnerPlayers.length);
+      for (const wp of winnerPlayers) { wp.chips += share; wp.won += share; }
+      winnerPlayers[0].chips += pot.amount - share * winnerPlayers.length;
+    }
+
+    // Attach readable hand name per player
+    for (const p of this.players) if (!p.folded && hands[p.id]) p.handResult = hands[p.id];
+  }
+
+  // Called after each action, timer expiry, or round advancement
+  afterAction() {
+    const bettors = this.getBettingPlayers();
+
+    // If one player remains (others folded/all-in), they win
+    if (bettors.length === 1) {
+      const winner = bettors[0];
+      const total = this.players.reduce((s,p)=>s+p.betTotal,0);
+      winner.chips += total; winner.won = total;
+      this.phase = 'showdown';
+      return;
+    }
+
+    // If zero betting players (everyone all-in), go to showdown
+    if (bettors.length === 0) {
+      this.goToShowdown();
+      return;
+    }
+
+    // Check if everyone has acted and bets are equal (using roundBet vs currentBet)
+    let roundComplete = true;
+    for (const p of bettors) {
+      if (!p.acted) { roundComplete = false; break; }
+    }
+    if (roundComplete) {
+      // All acted, check if all have matched currentBet
+      for (const p of bettors) {
+        if (p.roundBet !== this.currentBet) { roundComplete = false; break; }
+      }
+    }
+
+    if (roundComplete) {
+      this.advanceRound();
+    } else {
+      // Next player
+      const nextIdx = this.nextActingPlayer();
+      if (nextIdx === -1) { this.goToShowdown(); return; }
+      this.turnIdx = nextIdx;
+      this.actionOn = this.players[nextIdx].id;
+      this.setTimer();
     }
   }
 
-  checkRoundComplete() {
+  advanceRound() {
+    this.clearTimer();
+    for (const p of this.players) { p.acted = false; p.roundBet = 0; }
+    this.currentBet = 0;
+    this.lastRaise = 0;
+    this.minRaise = this.bb;
+
+    const prev = this.phase;
+    if (prev==='preflop') { this.phase='flop'; this.community.push(this.deck.pop(),this.deck.pop(),this.deck.pop()); }
+    else if (prev==='flop') { this.phase='turn'; this.community.push(this.deck.pop()); }
+    else if (prev==='turn') { this.phase='river'; this.community.push(this.deck.pop()); }
+    else if (prev==='river') { this.goToShowdown(); return; }
+    else return;
+
     const bettors = this.getBettingPlayers();
-    if (bettors.length===0) { this.goToShowdown(); return true; }
-    if (bettors.length===1) { // Everyone else folded or all-in
-      const winner = bettors[0];
-      const total = this.players.reduce((s,p)=>s+p.betTotal,0);
-      winner.chips += total;
-      winner.wonPot = total;
-      this.phase='showdown';
-      return true;
-    }
-    // Check if all non-all-in players have acted and bets equal
-    for (const p of bettors) if (!p.acted || p.betTotal!==this.currentBet) return false;
-    return true;
+    if (bettors.length <= 1) { this.goToShowdown(); return; }
+
+    // First active player after dealer starts
+    const n = this.players.length;
+    let startIdx = (this.dealerIdx+1)%n;
+    while (this.players[startIdx].folded||this.players[startIdx].allIn) startIdx=(startIdx+1)%n;
+    this.turnIdx = startIdx;
+    this.actionOn = this.players[startIdx].id;
+    this.setTimer();
+  }
+
+  goToSettle() {
+    this.phase = 'settle';
+    this.clearTimer();
+    this.actionOn = -1;
   }
 }
+
+
 
 // === Poker Room Manager ===
 const pokerRooms = new Map();
@@ -503,6 +558,34 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+async function handlePokerPhaseEnd(game, io) {
+  if (game.phase === 'showdown') {
+    for (const pl of game.players) {
+      await db.updateUserCoins(pl.id, Math.min(1000, pl.chips));
+    }
+    game.goToSettle();
+    const zeroPlayers = game.players.filter(pl => pl.chips <= 0);
+    for (const zp of zeroPlayers) {
+      io.to(`user:${zp.id}`).emit('poker kicked', '金币耗尽，已退出房间');
+      game.removePlayer(zp.id);
+    }
+    broadcastGame(game);
+    setTimeout(() => {
+      if (game.phase !== 'settle') return;
+      if (game.players.length >= 2) {
+        game.phase = 'waiting';
+        for (const pl of game.players) { pl.acted = false; pl.folded = false; pl.allIn = false; pl.betTotal = 0; pl.roundBet = 0; pl.hole = []; pl.handResult = null; pl.won = 0; }
+        game.community = []; game.pots = []; game.currentBet = 0; game.actionOn = -1;
+        broadcastGame(game);
+      } else {
+        io.to('poker_' + game.roomId).emit('poker msg', '玩家不足，房间关闭');
+        game.clearTimer();
+        pokerRooms.delete(game.roomId);
+      }
+    }, 5000);
+  }
+}
 
 // === Socket.io ===
 
@@ -547,6 +630,7 @@ io.on('connection', (socket) => {
     const game = new PokerGame(code, userId, opts||{});
     game.addPlayer({id:userId, username:username, uid:socket.request.session.userId, coins: (await db.getUserById(userId)).coins||500});
     pokerRooms.set(code, game);
+    game._notifyUpdate = () => { broadcastGame(game); handlePokerPhaseEnd(game, io).catch(e => console.error('Poker phase end error:', e)); };
     socket.join('poker_'+code);
     cb({roomId:code, game:serializeGame(game, userId)});
   });
@@ -575,10 +659,12 @@ io.on('connection', (socket) => {
     const game = getRoomForUser(userId);
     if (!game) return;
     const p = game.players.find(pl=>pl.id===userId);
-    if (p) await db.updateUserCoins(userId, Math.min(1000, p.chips));
+    if (game.phase==='settle'||game.phase==='waiting') {
+      if (p) await db.updateUserCoins(userId, Math.min(1000, p.chips));
+    }
     game.removePlayer(userId);
     socket.leave('poker_'+game.roomId);
-    if (game.players.length===0) pokerRooms.delete(game.roomId);
+    if (game.players.length===0) { game.clearTimer(); pokerRooms.delete(game.roomId); }
     else broadcastGame(game);
     if (cb) cb({ok:true});
   });
@@ -597,79 +683,59 @@ io.on('connection', (socket) => {
     if (cb) cb({ok:true});
   });
 
-  socket.on('poker action', async ({action, amount}, cb) => {
-    const game = getRoomForUser(userId);
-    if (!game) return cb({error:'不在房间中'});
-    if (game.actionOn!==userId) return cb({error:'还没轮到你'});
+  function performAction(game, userId, action, amount) {
     const p = game.players.find(pl=>pl.id===userId);
-    if (!p||p.folded||p.allIn) return cb({error:'无效操作'});
+    if (!p||p.folded||p.allIn) return '无效操作';
 
-    const callAmt = game.currentBet - p.betTotal;
+    game.clearTimer();
+
     if (action==='fold') { p.folded=true; p.acted=true; }
-    else if (action==='check') { if (!game.canCheck(userId)) return cb({error:'不能让牌'}); p.acted=true; }
+    else if (action==='check') {
+      if (!game.canCheck(userId)) return '不能让牌';
+      p.acted=true;
+    }
     else if (action==='call') {
+      const callAmt = game.currentBet - p.roundBet;
       const a = Math.min(p.chips, callAmt);
-      p.chips-=a; p.betTotal+=a; p.acted=true;
+      p.chips-=a; p.betTotal+=a; p.roundBet+=a; p.acted=true;
       if (p.chips===0) p.allIn=true;
     }
     else if (action==='raise'||action==='bet') {
       let total = parseInt(amount);
-      if (isNaN(total)||total<0) return cb({error:'无效金额'});
-      if (action==='bet'&&game.currentBet>0) return cb({error:'已有下注，请使用加注'});
-      if (action==='raise'&&game.currentBet===0) return cb({error:'无人下注，请使用下注'});
+      if (isNaN(total)||total<0) return '无效金额';
+      if (action==='bet'&&game.currentBet>0) return '已有下注，请使用加注';
+      if (action==='raise'&&game.currentBet===0) return '无人下注，请使用下注';
       const minTotal = game.currentBet + Math.max(game.minRaise, game.bb);
-      if (total < minTotal && total < p.chips + p.betTotal) return cb({error:`最少需下注 ${minTotal}`});
-      total = Math.min(total, p.chips + p.betTotal);
-      const delta = total - p.betTotal;
-      if (delta > p.chips) return cb({error:'筹码不足'});
-      p.chips-=delta; p.betTotal=total; p.acted=true;
+      if (total < minTotal && total < p.chips + p.roundBet) return `最少需下注 ${minTotal}`;
+      total = Math.min(total, p.chips + p.roundBet);
+      const delta = total - p.roundBet;
+      if (delta > p.chips) return '筹码不足';
+      p.chips-=delta; p.betTotal+=delta; p.roundBet=total; p.acted=true;
       game.lastRaise = total - game.currentBet;
       game.minRaise = Math.max(game.minRaise, game.lastRaise);
       game.currentBet = total;
       if (p.chips===0) p.allIn=true;
     }
     else if (action==='allin') {
-      const total = p.chips + p.betTotal;
-      p.chips=0; p.betTotal=total; p.allIn=true; p.acted=true;
+      const total = p.chips + p.roundBet;
+      p.chips=0; p.betTotal+= (total - p.roundBet); p.roundBet=total; p.allIn=true; p.acted=true;
       if (total > game.currentBet) { game.lastRaise = total - game.currentBet; game.minRaise = Math.max(game.minRaise, game.lastRaise); game.currentBet = total; }
     }
-    else return cb({error:'未知操作'});
+    else return '未知操作';
 
-    // Check round completion
-    if (game.checkRoundComplete()) {
-      if (game.phase!=='showdown') game.advanceRound();
-      broadcastGame(game);
-      if (game.phase==='showdown') {
-        // Sync chips back to DB
-        for (const pl of game.players) {
-          await db.updateUserCoins(pl.id, Math.min(1000, pl.chips));
-        }
-        // Remove players with 0 coins, notify them
-        const zeroPlayers = game.players.filter(pl => pl.chips <= 0);
-        for (const zp of zeroPlayers) {
-          io.to(`user:${zp.id}`).emit('poker kicked', '金币耗尽，已退出房间');
-          game.removePlayer(zp.id);
-        }
-        if (game.players.length >= 2) {
-          game.phase = 'waiting';
-          for (const pl of game.players) { pl.acted = false; pl.folded = false; pl.allIn = false; pl.betTotal = 0; pl.hole = []; }
-          game.community = []; game.pots = []; game.currentBet = 0;
-          broadcastGame(game);
-        } else {
-          // Not enough players
-          io.to('poker_' + game.roomId).emit('poker msg', '玩家不足，房间关闭');
-          pokerRooms.delete(game.roomId);
-        }
-      }
-      if (cb) cb({ok:true});
-      return;
-    }
+    game.afterAction();
+    return null;
+  }
 
-    // Next turn
-    const nextIdx = game.nextActive(game.turnIdx);
-    if (nextIdx===-1) { game.advanceRound(); }
-    else { game.turnIdx = nextIdx; game.actionOn = game.players[nextIdx].id; }
+  socket.on('poker action', async ({action, amount}, cb) => {
+    const game = getRoomForUser(userId);
+    if (!game) return cb({error:'不在房间中'});
+    if (game.actionOn!==userId) return cb({error:'还没轮到你'});
+    const err = performAction(game, userId, action, amount);
+    if (err) return cb({error:err});
+
     broadcastGame(game);
+    await handlePokerPhaseEnd(game, io);
     if (cb) cb({ok:true});
   });
 
@@ -678,10 +744,11 @@ io.on('connection', (socket) => {
     // Remove from poker room & save chips
     const game = getRoomForUser(userId);
     if (game) {
+      game.clearTimer();
       const p = game.players.find(pl=>pl.id===userId);
       if (p) await db.updateUserCoins(userId, Math.min(1000, p.chips));
       game.removePlayer(userId);
-      if (game.players.length===0) pokerRooms.delete(game.roomId);
+      if (game.players.length===0) { game.clearTimer(); pokerRooms.delete(game.roomId); }
       else broadcastGame(game);
     }
     if (isGuest && guestSockets[userId]) {
@@ -703,11 +770,12 @@ function broadcastGame(game) {
 function serializeGame(game, viewerId) {
   const pdata = game.players.map(p => ({
     id: p.id, username: p.username, seat: p.seat, chips: p.chips, betTotal: p.betTotal,
+    roundBet: game.phase!=='waiting'?p.roundBet:0,
     folded: p.folded, allIn: p.allIn, acted: p.acted,
     isViewer: p.id===viewerId,
-    hole: p.id===viewerId ? p.hole : (game.phase==='showdown'?p.hole:[]),
-    handName: game.phase==='showdown'&&!p.folded&&p.handResult ? p.handResult.na : null,
-    wonPot: p.wonPot||0,
+    hole: p.id===viewerId ? p.hole : (game.phase==='showdown'||game.phase==='settle'?p.hole:[]),
+    handName: (game.phase==='showdown'||game.phase==='settle')&&!p.folded&&p.handResult ? p.handResult.name : null,
+    won: p.won||0,
   }));
   const isPlaying = game.players.some(p=>p.id===viewerId);
   return {
@@ -718,7 +786,7 @@ function serializeGame(game, viewerId) {
     pots: game.pots,
     currentBet: game.currentBet,
     minRaise: game.minRaise,
-    actionOn: isPlaying ? game.actionOn : null,
+    actionOn: isPlaying?game.actionOn:null,
     sb: game.sb, bb: game.bb,
     dealerIdx: game.dealerIdx,
   };
