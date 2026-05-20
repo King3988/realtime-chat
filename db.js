@@ -27,6 +27,7 @@ async function initSchema() {
         is_guest INTEGER DEFAULT 0,
         role TEXT DEFAULT 'user',
         xp INTEGER DEFAULT 0,
+        banned INTEGER DEFAULT 0,
         created_at TIMESTAMP DEFAULT NOW()
       );
       CREATE TABLE IF NOT EXISTS friends (
@@ -47,6 +48,7 @@ async function initSchema() {
     `);
     await pgPool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user'`);
     await pgPool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS xp INTEGER DEFAULT 0`);
+    await pgPool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS banned INTEGER DEFAULT 0`);
   } else {
     sqlite.exec(`
       CREATE TABLE IF NOT EXISTS users (
@@ -57,6 +59,7 @@ async function initSchema() {
         is_guest INTEGER DEFAULT 0,
         role TEXT DEFAULT 'user',
         xp INTEGER DEFAULT 0,
+        banned INTEGER DEFAULT 0,
         created_at TEXT DEFAULT (datetime('now'))
       );
       CREATE TABLE IF NOT EXISTS friends (
@@ -78,6 +81,7 @@ async function initSchema() {
     const cols = sqlite.prepare("PRAGMA table_info('users')").all().map(c => c.name);
     if (!cols.includes('role')) sqlite.exec("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'");
     if (!cols.includes('xp')) sqlite.exec("ALTER TABLE users ADD COLUMN xp INTEGER DEFAULT 0");
+    if (!cols.includes('banned')) sqlite.exec("ALTER TABLE users ADD COLUMN banned INTEGER DEFAULT 0");
   }
 }
 
@@ -243,7 +247,7 @@ async function getFriendStatus(userId, friendId) {
 async function getAllUsers(page = 1, limit = 50) {
   const offset = (page - 1) * limit;
   const rows = await query(
-    `SELECT id, uid, username, is_guest, role, xp, created_at FROM users ORDER BY id ASC LIMIT ? OFFSET ?`,
+    `SELECT id, uid, username, is_guest, role, xp, banned, created_at FROM users ORDER BY id ASC LIMIT ? OFFSET ?`,
     [limit, offset]
   );
   const countRow = await get('SELECT COUNT(*) as total FROM users');
@@ -269,6 +273,22 @@ async function deleteUser(userId) {
   await run('DELETE FROM users WHERE id = ?', [userId]);
 }
 
+async function banUser(userId) {
+  await run('UPDATE users SET banned = 1 WHERE id = ?', [userId]);
+}
+
+async function unbanUser(userId) {
+  await run('UPDATE users SET banned = 0 WHERE id = ?', [userId]);
+}
+
+async function deleteAllGuests() {
+  const guests = await query('SELECT id FROM users WHERE is_guest = 1');
+  for (const g of guests.rows) {
+    await deleteUser(g.id);
+  }
+  return guests.rows.length;
+}
+
 initSchema();
 
 module.exports = {
@@ -277,4 +297,5 @@ module.exports = {
   saveMessage, getMessages, getFriendStatus,
   addXp, levelForXp, xpForNextLevel, XP_MULTIPLIER,
   getAllUsers, updateUserRole, updateUserXp, updateUserPassword, deleteUser,
+  banUser, unbanUser, deleteAllGuests,
 };

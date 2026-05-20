@@ -250,7 +250,7 @@ section:nth-child(even){background:#15152a}
     <p class="section-sub">用户管理</p>
     <div class="admin-table-wrap">
       <table>
-        <thead><tr><th>ID</th><th>UID</th><th>用户名</th><th>角色</th><th>等级</th><th>经验</th><th>操作</th></tr></thead>
+        <thead><tr><th>ID</th><th>UID</th><th>用户名</th><th>角色</th><th>等级</th><th>经验</th><th>状态</th><th>操作</th></tr></thead>
         <tbody id="admin-user-list"></tbody>
       </table>
     </div>
@@ -391,6 +391,7 @@ function connectSocket() {
   });
   socket.on('friend request', () => loadFriends());
   socket.on('friend added', () => { loadFriends(); loadChatFriends(); });
+  socket.on('banned', () => { alert('你已被封禁'); logout(); });
 }
 
 async function loadFriends() {
@@ -518,20 +519,28 @@ async function loadAdmin() {
   if (!currentUser||currentUser.role!=='admin') return;
   const r = await fetch('/api/admin/users'), d = await r.json();
   const tbody = document.getElementById('admin-user-list');
-  if (!d.users||!d.users.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:#555">暂无用户</td></tr>'; return; }
-  tbody.innerHTML = d.users.map(u => `
-    <tr>
+  if (!d.users||!d.users.length) { tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:#555">暂无用户</td></tr>'; return; }
+  tbody.innerHTML = d.users.map(u => {
+    const isSelf = u.id === currentUser.id;
+    const isAdmin = u.role === 'admin';
+    const canEdit = !isAdmin || isSelf;
+    return `<tr>
       <td>${u.id}</td>
       <td style="color:#888;font-size:.8rem">${u.uid}</td>
-      <td>${escapeHtml(u.username)}</td>
-      <td><select onchange="updateRole(${u.id},this.value)">
+      <td>${escapeHtml(u.username)}${isSelf?' <span style="color:#555;font-size:.75rem">(你)</span>':''}</td>
+      <td><select onchange="updateRole(${u.id},this.value)" ${!canEdit?'disabled':''}>
         ${['user','vip','svip','admin'].map(r => `<option value="${r}" ${u.role===r?'selected':''}>${r}</option>`).join('')}
       </select></td>
       <td>Lv.${u.level||1}</td>
-      <td><input class="xp-input" type="number" value="${u.xp||0}" id="xp-${u.id}" min="0"></td>
-      <td><button class="btn btn-primary btn-sm" onclick="saveXp(${u.id})">保存XP</button></td>
-    </tr>
-  `).join('');
+      <td><input class="xp-input" type="number" value="${u.xp||0}" id="xp-${u.id}" min="0" ${!canEdit?'disabled':''}></td>
+      <td>${u.banned ? '<span style="color:#e94560;font-weight:600">封禁</span>' : '<span style="color:#4caf50">正常</span>'}</td>
+      <td style="display:flex;gap:4px;flex-wrap:wrap">
+        ${canEdit ? `<button class="btn btn-primary btn-sm" onclick="saveXp(${u.id})">保存</button>` : ''}
+        ${u.banned ? `<button class="btn btn-ghost btn-sm" onclick="unbanUser(${u.id})">解封</button>`
+          : (isSelf ? '' : `<button class="btn btn-sm" style="background:#c0392b;color:#fff" onclick="banUser(${u.id})">封禁</button>`)}
+      </td>
+    </tr>`;
+  }).join('');
 }
 async function updateRole(id, role) {
   await fetch(`/api/admin/users/${id}/role`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({role})});
@@ -539,6 +548,17 @@ async function updateRole(id, role) {
 async function saveXp(id) {
   const xp = parseInt(document.getElementById('xp-'+id).value);
   await fetch(`/api/admin/users/${id}/xp`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({xp})});
+  loadAdmin();
+}
+async function banUser(id) {
+  if (!confirm('确定封禁该用户？')) return;
+  const r = await fetch(`/api/admin/users/${id}/ban`,{method:'POST',headers:{'Content-Type':'application/json'}});
+  const d = await r.json();
+  if (d.error) return alert(d.error);
+  loadAdmin();
+}
+async function unbanUser(id) {
+  await fetch(`/api/admin/users/${id}/unban`,{method:'POST',headers:{'Content-Type':'application/json'}});
   loadAdmin();
 }
 // Re-observe admin section for lazy load

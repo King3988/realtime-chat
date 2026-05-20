@@ -52,6 +52,7 @@ app.post('/api/login', async (req, res) => {
   if (!user || user.is_guest || !bcrypt.compareSync(password, user.password_hash)) {
     return res.status(400).json({ error: '用户名或密码错误' });
   }
+  if (user.banned) return res.status(403).json({ error: '账号已被封禁' });
   req.session.userId = user.id;
   req.session.username = user.username;
   req.session.role = user.role;
@@ -181,25 +182,50 @@ app.get('/api/admin/users/:id', requireAdmin, async (req, res) => {
   res.json({ user: { ...user, level: db.levelForXp(user.xp || 0) } });
 });
 
+async function isTargetAdmin(targetId) {
+  const target = await db.getUserById(targetId);
+  return target && target.role === 'admin';
+}
+
 app.put('/api/admin/users/:id/role', requireAdmin, async (req, res) => {
+  const targetId = parseInt(req.params.id);
+  if (await isTargetAdmin(targetId)) return res.status(403).json({ error: '不能修改其他超管的权限' });
   const { role } = req.body;
   if (!['user', 'vip', 'svip', 'admin'].includes(role)) return res.status(400).json({ error: '无效角色' });
-  await db.updateUserRole(parseInt(req.params.id), role);
+  await db.updateUserRole(targetId, role);
   res.json({ ok: true });
 });
 
 app.put('/api/admin/users/:id/xp', requireAdmin, async (req, res) => {
+  const targetId = parseInt(req.params.id);
+  if (await isTargetAdmin(targetId)) return res.status(403).json({ error: '不能修改其他超管的经验' });
   const { xp } = req.body;
   if (xp === undefined || xp < 0) return res.status(400).json({ error: '无效经验值' });
-  await db.updateUserXp(parseInt(req.params.id), xp);
+  await db.updateUserXp(targetId, xp);
   res.json({ ok: true });
 });
 
 app.put('/api/admin/users/:id/password', requireAdmin, async (req, res) => {
+  const targetId = parseInt(req.params.id);
+  if (targetId !== req.session.userId && await isTargetAdmin(targetId)) return res.status(403).json({ error: '不能修改其他超管的密码' });
   const { password } = req.body;
   if (!password || password.length < 4) return res.status(400).json({ error: '密码至少 4 位' });
   const hash = bcrypt.hashSync(password, SALT_ROUNDS);
-  await db.updateUserPassword(parseInt(req.params.id), hash);
+  await db.updateUserPassword(targetId, hash);
+  res.json({ ok: true });
+});
+
+app.post('/api/admin/users/:id/ban', requireAdmin, async (req, res) => {
+  const targetId = parseInt(req.params.id);
+  if (targetId === req.session.userId) return res.status(400).json({ error: '不能封禁自己' });
+  if (await isTargetAdmin(targetId)) return res.status(403).json({ error: '不能封禁其他超管' });
+  await db.banUser(targetId);
+  io.to(`user:${targetId}`).emit('banned');
+  res.json({ ok: true });
+});
+
+app.post('/api/admin/users/:id/unban', requireAdmin, async (req, res) => {
+  await db.unbanUser(parseInt(req.params.id));
   res.json({ ok: true });
 });
 
@@ -215,13 +241,12 @@ app.use((req, res, next) => {
 const wrap = (middleware) => (socket, next) => middleware(socket.request, {}, next);
 io.use(wrap(sessionMiddleware));
 
-io.use((socket, next) => {
+io.use(async (socket, next) => {
   const session = socket.request.session;
-  if (session && session.userId) {
-    next();
-  } else {
-    next(new Error('未登录'));
-  }
+  if (!session || !session.userId) return next(new Error('未登录'));
+  const user = await db.getUserById(session.userId);
+  if (user && user.banned) return next(new Error('已被封禁'));
+  next();
 });
 
 const guestSockets = {};
