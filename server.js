@@ -294,10 +294,16 @@ class PokerGame {
 
   removePlayer(userId) {
     this.clearTimer();
-    const idx = this.players.findIndex(p=>p.id===userId);
-    if (idx===-1) return;
-    this.players.splice(idx,1);
-    if (this.players.length===0) this.phase='waiting';
+    const p = this.players.find(pl=>pl.id===userId);
+    if (!p) return;
+    if (this.phase === 'waiting' || this.phase === 'settle') {
+      const idx = this.players.indexOf(p);
+      this.players.splice(idx, 1);
+    } else {
+      p.folded = true;
+      p.acted = true;
+    }
+    if (this.players.length === 0) this.phase = 'waiting';
   }
 
   canStart() { return this.players.length>=2&&this.phase==='waiting'; }
@@ -408,21 +414,23 @@ class PokerGame {
   }
 
   calcSidePots() {
-    const involved = this.players.filter(p=>!p.folded);
-    const sorted = [...involved].filter(p=>p.allIn).sort((a,b)=>a.betTotal-b.betTotal);
+    const all = this.players;
+    const nonFolded = all.filter(p=>!p.folded);
+    const allInSorted = [...all].filter(p=>p.allIn).sort((a,b)=>a.betTotal-b.betTotal);
     this.pots = [];
     let prevTotal = 0;
-    for (const ap of sorted) {
+    for (const ap of allInSorted) {
       const slice = ap.betTotal - prevTotal;
-      if (slice<=0) continue;
-      const eligible = involved.filter(p=>p.betTotal>=ap.betTotal);
-      this.pots.push({amount:slice*eligible.length, eligible: eligible.map(p=>p.id)});
+      if (slice <= 0) continue;
+      const count = all.filter(p => p.betTotal >= ap.betTotal).length;
+      const eligible = nonFolded.filter(p => p.betTotal >= ap.betTotal);
+      this.pots.push({amount: slice * count, eligible: eligible.map(p=>p.id)});
       prevTotal = ap.betTotal;
     }
-    const remaining = involved.filter(p=>!p.allIn||p.betTotal>prevTotal);
-    if (remaining.length>0) {
-      const extra = remaining.reduce((s,p)=>s+(p.betTotal-prevTotal),0);
-      this.pots.push({amount:extra, eligible: remaining.map(p=>p.id)});
+    const mainEligible = nonFolded.filter(p => !p.allIn || p.betTotal > prevTotal);
+    if (mainEligible.length > 0) {
+      const extra = all.reduce((s, p) => s + Math.max(0, p.betTotal - prevTotal), 0);
+      this.pots.push({amount: extra, eligible: mainEligible.map(p=>p.id)});
     }
   }
 
@@ -659,8 +667,9 @@ io.on('connection', (socket) => {
     const game = getRoomForUser(userId);
     if (!game) return;
     const p = game.players.find(pl=>pl.id===userId);
-    if (game.phase==='settle'||game.phase==='waiting') {
-      if (p) await db.updateUserCoins(userId, Math.min(1000, p.chips));
+    // Only save chips during idle phases; mid-hand chips synced at showdown
+    if ((game.phase==='settle'||game.phase==='waiting') && p) {
+      await db.updateUserCoins(userId, Math.min(1000, p.chips));
     }
     game.removePlayer(userId);
     socket.leave('poker_'+game.roomId);
@@ -673,12 +682,12 @@ io.on('connection', (socket) => {
     const game = getRoomForUser(userId);
     if (!game) return cb({error:'不在房间中'});
     if (game.hostId!==userId) return cb({error:'只有房主可以开始'});
-    if (!game.start()) return cb({error:'至少需要2名玩家'});
-    // Deduct blinds from DB for anti-cheat
+    // Sync chips from DB first, then start posts blinds from correct amounts
     for (const p of game.players) {
       const userData = await db.getUserById(p.id);
       if (userData) { p.chips = Math.min(1000, userData.coins||500); }
     }
+    if (!game.start()) return cb({error:'至少需要2名玩家'});
     broadcastGame(game);
     if (cb) cb({ok:true});
   });
@@ -741,12 +750,13 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', async () => {
     console.log(`${username} 断开: ${socket.id}`);
-    // Remove from poker room & save chips
     const game = getRoomForUser(userId);
     if (game) {
       game.clearTimer();
       const p = game.players.find(pl=>pl.id===userId);
-      if (p) await db.updateUserCoins(userId, Math.min(1000, p.chips));
+      if (p && (game.phase==='settle'||game.phase==='waiting')) {
+        await db.updateUserCoins(userId, Math.min(1000, p.chips));
+      }
       game.removePlayer(userId);
       if (game.players.length===0) { game.clearTimer(); pokerRooms.delete(game.roomId); }
       else broadcastGame(game);
