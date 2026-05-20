@@ -563,7 +563,7 @@ io.on('connection', (socket) => {
     const u = await db.getUserById(userId);
     if (!game.addPlayer({id:userId, username, uid:u.uid, coins: u.coins||500})) return cb({error:'加入失败'});
     socket.join('poker_'+roomId);
-    io.to('poker_'+roomId).emit('poker update', serializeGame(game));
+    broadcastGame(game);
     cb({roomId, game:serializeGame(game, userId)});
   });
 
@@ -575,7 +575,7 @@ io.on('connection', (socket) => {
     game.removePlayer(userId);
     socket.leave('poker_'+game.roomId);
     if (game.players.length===0) pokerRooms.delete(game.roomId);
-    else io.to('poker_'+game.roomId).emit('poker update', serializeGame(game));
+    else broadcastGame(game);
     if (cb) cb({ok:true});
   });
 
@@ -589,7 +589,7 @@ io.on('connection', (socket) => {
       const userData = await db.getUserById(p.id);
       if (userData) { p.chips = Math.min(1000, userData.coins||500); }
     }
-    io.to('poker_'+game.roomId).emit('poker update', serializeGame(game));
+    broadcastGame(game);
     if (cb) cb({ok:true});
   });
 
@@ -634,7 +634,7 @@ io.on('connection', (socket) => {
     // Check round completion
     if (game.checkRoundComplete()) {
       if (game.phase!=='showdown') game.advanceRound();
-      io.to('poker_'+game.roomId).emit('poker update', serializeGame(game));
+      broadcastGame(game);
       if (cb) cb({ok:true});
       return;
     }
@@ -643,7 +643,7 @@ io.on('connection', (socket) => {
     const nextIdx = game.nextActive(game.turnIdx);
     if (nextIdx===-1) { game.advanceRound(); }
     else { game.turnIdx = nextIdx; game.actionOn = game.players[nextIdx].id; }
-    io.to('poker_'+game.roomId).emit('poker update', serializeGame(game));
+    broadcastGame(game);
     if (cb) cb({ok:true});
   });
 
@@ -654,7 +654,7 @@ io.on('connection', (socket) => {
     if (game) {
       game.removePlayer(userId);
       if (game.players.length===0) pokerRooms.delete(game.roomId);
-      else io.to('poker_'+game.roomId).emit('poker update', serializeGame(game));
+      else broadcastGame(game);
     }
     if (isGuest && guestSockets[userId]) {
       guestSockets[userId].delete(socket.id);
@@ -665,6 +665,12 @@ io.on('connection', (socket) => {
     }
   });
 });
+
+function broadcastGame(game) {
+  for (const p of game.players) {
+    io.to(`user:${p.id}`).emit('poker update', serializeGame(game, p.id));
+  }
+}
 
 function serializeGame(game, viewerId) {
   const pdata = game.players.map(p => ({

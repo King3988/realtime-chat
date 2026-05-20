@@ -134,35 +134,50 @@ section:nth-child(even){background:rgba(255,255,255,.02)}
 .mine-lb .r1{color:var(--yellow)}
 .mine-lb .r2{color:#c0c0c0}
 .mine-lb .r3{color:#cd7f32}
-/* Poker */
-.pkr-card{display:inline-flex;align-items:center;justify-content:center;width:40px;height:56px;border-radius:6px;font-size:1rem;font-weight:700;background:#fff;color:#222;box-shadow:0 2px 6px rgba(0,0,0,.4);border:1px solid #ccc;position:relative}
-.pkr-card .s{font-size:.65rem;position:absolute;bottom:3px}
-.pkr-card .t{font-size:.7rem;position:absolute;top:3px;left:5px}
-.pkr-card .b{font-size:.7rem;position:absolute;bottom:3px;right:5px;transform:rotate(180deg)}
-.pkr-card.red{color:#d32f2f}
-.pkr-card.back{background:linear-gradient(135deg,#8f51ea,#fe53bb);color:transparent;border-color:transparent;box-shadow:0 2px 8px rgba(142,81,234,.4)}
-.pkr-seat{background:var(--bg-card);border-radius:10px;padding:8px 12px;border:1px solid #333;text-align:center;min-width:100px;transition:.2s;font-size:.82rem}
-.pkr-seat.active{border-color:var(--accent);box-shadow:0 0 12px rgba(254,83,186,.3)}
+/* Poker Table */
+.pkr-tbl{position:relative;width:100%;max-width:560px;height:340px;background:radial-gradient(ellipse,#1b5e20,#0d3b0f);border-radius:50%;border:6px solid #3e2723;box-shadow:0 0 30px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pkr-center{display:flex;flex-direction:column;align-items:center;gap:4px;z-index:2}
+.pkr-comm{display:flex;gap:4px;min-height:44px}
+.pkr-comm .pkr-card{width:32px;height:44px;font-size:.75rem;border-radius:4px;animation:dealCard .3s ease-out}
+.pkr-comm .pkr-card .t{font-size:.6rem;top:2px;left:3px}
+.pkr-comm .pkr-card .s{font-size:.5rem}
+.pkr-deck{width:32px;height:44px;border-radius:4px;background:linear-gradient(135deg,#8f51ea,#fe53bb);border:1px solid rgba(255,255,255,.2);cursor:default;display:inline-flex;align-items:center;justify-content:center;font-size:.5rem;color:rgba(255,255,255,.5)}
+.pkr-pot{color:#ffdb3b;font-size:.82rem;font-weight:600;text-shadow:0 0 8px rgba(255,219,59,.3)}
+.pkr-seats{position:absolute;inset:0;pointer-events:none;z-index:1}
+.pkr-seat{position:absolute;pointer-events:auto;background:var(--bg-card);border-radius:10px;padding:6px 10px;border:2px solid #444;text-align:center;min-width:90px;max-width:110px;transition:.2s;font-size:.78rem}
+.pkr-seat.active{border-color:var(--accent);box-shadow:0 0 14px rgba(254,83,186,.4)}
 .pkr-seat.dealer{border-color:var(--yellow)}
-.pkr-seat .name{color:#eee;font-weight:600}
-.pkr-seat .chips{color:var(--yellow);font-size:.75rem}
-.pkr-seat .bet{color:#888;font-size:.7rem}
-.pkr-seat .hand{color:var(--accent);font-size:.75rem}
-.pkr-seat .won{color:#4caf50;font-size:.75rem}
-.pkr-seat.folded{opacity:.4}
-.pkr-seat .hole{display:flex;gap:3px;justify-content:center;margin-top:4px}
-.pkr-seat .hole .pkr-card{width:28px;height:38px;font-size:.7rem}
-.pkr-seat .hole .pkr-card .s{font-size:.5rem}
-.pkr-seat .hole .pkr-card .t,.pkr-seat .hole .pkr-card .b{font-size:.55rem}
+.pkr-seat .name{color:#eee;font-weight:600;font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:90px}
+.pkr-seat .chips{color:var(--yellow);font-size:.7rem}
+.pkr-seat .bet{color:#aaa;font-size:.65rem}
+.pkr-seat .hand{color:var(--accent);font-size:.7rem}
+.pkr-seat .won{color:#4caf50;font-size:.7rem}
+.pkr-seat.folded{opacity:.35}
+.pkr-seat .hole{display:flex;gap:2px;justify-content:center;margin-top:3px}
+.pkr-seat .hole .pkr-card{width:22px;height:30px;font-size:.55rem}
+.pkr-seat .hole .pkr-card .t{font-size:.45rem;top:1px;left:2px}
+.pkr-seat .hole .pkr-card .s{font-size:.4rem}
+.pkr-card{display:inline-flex;align-items:center;justify-content:center;width:40px;height:56px;border-radius:6px;font-size:1rem;font-weight:700;background:#fff;color:#222;box-shadow:0 2px 8px rgba(0,0,0,.5);border:1px solid #ccc;position:relative}
+.pkr-card.red{color:#d32f2f}
+.pkr-card .t{font-size:.7rem;position:absolute;top:3px;left:5px}
+.pkr-card .s{font-size:.65rem}
+.pkr-card.back{background:linear-gradient(135deg,#8f51ea,#fe53bb);border-color:transparent;box-shadow:0 2px 8px rgba(142,81,234,.4)}
+.pkr-card.small{width:22px;height:30px;font-size:.55rem}
+.pkr-card.small .t{font-size:.45rem;top:1px;left:2px}
+.pkr-card.small .s{font-size:.4rem}
+.pkr-my-cards .pkr-card{animation:dealCard .4s ease-out}
+@keyframes dealCard{from{opacity:0;transform:translateY(-60px) scale(.5)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes dealComm{from{opacity:0;transform:scale(0) rotate(-180deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+/* Poker controls */
 .pkr-btn{padding:6px 14px;font-size:.82rem;border-radius:5rem;border:1px solid #333;cursor:pointer;transition:.2s;background:var(--bg-card);color:#eee;font-family:inherit}
 .pkr-btn:hover{background:#333}
 .pkr-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
 .pkr-btn.primary:hover{background:#e045a0}
 .pkr-btn.danger{background:#c0392b;color:#fff;border-color:#c0392b}
 .pkr-btn:disabled{opacity:.4;cursor:default}
-#poker-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
 .pkr-raise-input{width:80px;padding:4px 8px;border:1px solid #333;border-radius:5rem;background:var(--bg-card);color:#eee;text-align:center;font-size:.82rem;outline:none;font-family:inherit}
 .pkr-raise-input:focus{border-color:var(--accent)}
+.pkr-phase{color:#888;font-size:.8rem;text-transform:uppercase;letter-spacing:1px}
 /* Admin */
 #sec-admin .admin-table-wrap{overflow-x:auto;background:var(--bg-secondary);border-radius:12px;padding:16px;border:1px solid #333}
 #sec-admin table{width:100%;border-collapse:collapse;font-size:.85rem}
@@ -300,7 +315,7 @@ section:nth-child(even){background:rgba(255,255,255,.02)}
       </div>
     </div>
     <!-- Poker sub-page -->
-    <div id="poker-game" style="display:none;flex-direction:column;align-items:center;gap:10px">
+    <div id="poker-game" style="display:none;flex-direction:column;align-items:center;gap:8px">
       <div class="mine-header">
         <button class="btn btn-ghost btn-sm" onclick="exitGame()">← 返回</button>
         <span style="color:#888;font-size:.85rem" id="poker-title">德州扑克</span>
@@ -308,23 +323,30 @@ section:nth-child(even){background:rgba(255,255,255,.02)}
       <!-- Lobby -->
       <div id="poker-lobby" style="width:100%;max-width:500px">
         <div style="display:flex;gap:8px;margin-bottom:12px">
-          <input id="poker-nick" style="display:none" placeholder="你的昵称">
           <button class="btn btn-primary btn-sm" onclick="pokerCreate()">创建房间</button>
         </div>
         <div id="poker-room-list"><div class="no-data" style="text-align:center;color:#555;padding:20px">暂无房间，点击上方创建</div></div>
       </div>
       <!-- Table -->
-      <div id="poker-table" style="display:none;flex-direction:column;align-items:center;gap:8px;width:100%;max-width:640px">
-        <div id="poker-msg" style="color:#888;font-size:.85rem;min-height:1.5em;text-align:center"></div>
-        <!-- Players area -->
-        <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;width:100%" id="poker-players"></div>
-        <!-- Community cards -->
-        <div style="display:flex;gap:6px;min-height:52px;align-items:center;justify-content:center;padding:8px;background:var(--bg-card);border-radius:10px;border:1px solid #333;width:100%">
-          <span id="poker-community" style="display:flex;gap:6px"></span>
-          <span id="poker-pot" style="color:#ffdb3b;font-size:.85rem;margin-left:8px"></span>
+      <div id="poker-table" style="display:none;flex-direction:column;align-items:center;gap:8px;width:100%">
+        <div style="display:flex;gap:8px;align-items:center;width:100%;max-width:560px">
+          <span class="pkr-phase" id="poker-phase"></span>
+          <span style="flex:1"></span>
+          <span id="poker-msg" style="color:#888;font-size:.78rem"></span>
+        </div>
+        <!-- Table with seats -->
+        <div class="pkr-tbl" id="poker-tbl">
+          <div class="pkr-seats" id="poker-seats"></div>
+          <div class="pkr-center">
+            <div class="pkr-comm" id="poker-community"></div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <div class="pkr-deck" id="poker-deck">🂠</div>
+              <span class="pkr-pot" id="poker-pot"></span>
+            </div>
+          </div>
         </div>
         <!-- My cards -->
-        <div id="poker-my-cards" style="display:flex;gap:6px;min-height:52px"></div>
+        <div class="pkr-my-cards" id="poker-my-cards" style="display:flex;gap:6px;min-height:56px"></div>
         <!-- Controls -->
         <div id="poker-controls" style="display:none;gap:6px;flex-wrap:wrap;justify-content:center"></div>
         <div id="poker-info" style="color:#555;font-size:.8rem;text-align:center;max-width:500px"></div>
@@ -885,78 +907,85 @@ function pokerRender() {
   const s = pokerState;
   if (!s) return;
   document.getElementById('poker-title').textContent = `德州扑克 · 房间 ${s.roomId}`;
+  const me = s.players.find(p=>p.isViewer);
+  // Phase indicator
+  const phaseNames = {waiting:'等待中',preflop:'翻牌前',flop:'翻牌圈',turn:'转牌圈',river:'河牌圈',showdown:'摊牌'};
+  document.getElementById('poker-phase').textContent = phaseNames[s.phase]||'';
   // Pot
   const totalPot = s.pots ? s.pots.reduce((a,p)=>a+p.amount,0) : s.players.reduce((a,p)=>a+p.betTotal,0);
-  document.getElementById('poker-pot').textContent = totalPot > 0 ? `底池: ${totalPot}` : '';
-  // Community
+  document.getElementById('poker-pot').textContent = totalPot > 0 ? `底池 ${totalPot}` : '';
+  // Deck (show when game is in progress)
+  const deckEl = document.getElementById('poker-deck');
+  deckEl.style.display = (s.phase!=='waiting'&&s.phase!=='showdown') ? 'inline-flex' : 'none';
+  // Community cards
   const comm = document.getElementById('poker-community');
-  comm.innerHTML = s.community.map(c => s.phase==='preflop'||s.phase==='waiting'?'':cardHtml(c)).join('') || '<span style="color:#555;font-size:.82rem">等待发牌</span>';
+  if (s.phase==='preflop'||s.phase==='waiting') comm.innerHTML = '<span style="color:rgba(255,255,255,.3);font-size:.75rem">等待发牌</span>';
+  else comm.innerHTML = s.community.map(c => cardHtml(c)).join('') || '';
   // My cards
-  const me = s.players.find(p=>p.isViewer);
   const myCards = document.getElementById('poker-my-cards');
-  if (me && me.hole && me.hole.length) {
-    myCards.innerHTML = me.hole.map(c => cardHtml(c)).join('');
-  } else { myCards.innerHTML = ''; }
-  // Players
-  const pArea = document.getElementById('poker-players');
-  pArea.innerHTML = s.players.map((p,i) => {
-    const isDealer = i === s.dealerIdx;
-    const isActive = s.actionOn === p.id && !p.folded && s.phase !== 'showdown' && s.phase !== 'waiting';
+  myCards.innerHTML = (me && me.hole && me.hole.length) ? me.hole.map(c => cardHtml(c)).join('') : '';
+  // Seats: position players around the table
+  const seats = document.getElementById('poker-seats');
+  const SPAWN = [
+    {top:'82%',left:'50%'}, {top:'48%',left:'91%'}, {top:'10%',left:'72%'},
+    {top:'10%',left:'28%'}, {top:'48%',left:'9%'},  {top:'82%',left:'25%'},
+  ];
+  // Sort players: viewer first, then clockwise
+  const sorted = [...s.players];
+  const vi = sorted.findIndex(p=>p.isViewer);
+  if (vi!==-1) { const v = sorted.splice(vi,1)[0]; sorted.unshift(v); }
+  seats.innerHTML = sorted.map((p,i) => {
+    const pos = SPAWN[i]||{top:'50%',left:'50%'};
+    const isDealer = p.id===s.players[s.dealerIdx]?.id;
+    const isActive = s.actionOn===p.id && !p.folded && s.phase!=='showdown' && s.phase!=='waiting';
     const cls = ['pkr-seat', isActive?'active':'', isDealer?'dealer':'', p.folded?'folded':''].filter(Boolean).join(' ');
-    let holeHtml = '';
-    if (p.isViewer) {
-      holeHtml = ''; // Shown in my-cards
-    } else if (s.phase==='showdown' && !p.folded && p.hole && p.hole.length) {
-      holeHtml = `<div class="hole">${p.hole.map(c=>cardHtml(c,true)).join('')}</div>`;
-    } else if (!p.folded && s.phase!=='waiting') {
-      holeHtml = `<div class="hole">${cardBack(true)}${cardBack(true)}</div>`;
-    }
-    return `<div class="${cls}"><div class="name">${escapeHtml(p.username)}${isDealer?' D':''}</div>
+    let holeHtml='';
+    if (p.isViewer) holeHtml='';
+    else if (s.phase==='showdown'&&!p.folded&&p.hole&&p.hole.length) holeHtml=`<div class="hole">${p.hole.map(c=>cardHtml(c,true)).join('')}</div>`;
+    else if (!p.folded&&s.phase!=='waiting') holeHtml=`<div class="hole">${cardBack(true)}${cardBack(true)}</div>`;
+    return `<div class="${cls}" style="position:absolute;top:${pos.top};left:${pos.left};transform:translate(-50%,-50%)">
+      <div class="name">${escapeHtml(p.username)}${isDealer?' 🎯':''}</div>
       <div class="chips">🪙${p.chips}</div>
       ${p.betTotal>0?`<div class="bet">下注 ${p.betTotal}</div>`:''}
-      ${p.allIn?'<div style="color:var(--accent);font-size:.75rem">ALL-IN</div>':''}
+      ${p.allIn?'<div style="color:var(--accent);font-size:.7rem">ALL-IN</div>':''}
       ${p.handName?`<div class="hand">${p.handName}</div>`:''}
       ${p.wonPot?`<div class="won">+${p.wonPot}</div>`:''}
-      ${holeHtml}</div>`;
+      ${holeHtml}
+    </div>`;
   }).join('');
   // Controls
   const ctrl = document.getElementById('poker-controls');
   if (s.phase==='waiting') {
-    const isHost = s.hostId === (currentUser ? currentUser.id : null);
-    ctrl.style.display = 'flex';
-    ctrl.innerHTML = `<button class="pkr-btn danger" onclick="pokerLeave()">离开房间</button>
-      ${isHost ? `<button class="pkr-btn primary" onclick="pokerStart()">开始游戏</button>` : '<span style="color:#555;font-size:.82rem">等待房主开始...</span>'}`;
-    document.getElementById('poker-info').textContent = '等待中...';
-  } else if (me && !me.folded && s.actionOn === (currentUser?currentUser.id:null)) {
-    ctrl.style.display = 'flex';
-    const callAmt = s.currentBet - (me.betTotal||0);
-    const canCheck = callAmt === 0;
-    const canCall = callAmt > 0 && callAmt <= me.chips;
-    const minRaise = s.currentBet + Math.max(s.minRaise, s.bb);
-    const maxRaise = me.chips + me.betTotal;
-    let actions = `<button class="pkr-btn danger" onclick="pokerAction('fold')">弃牌</button>`;
-    if (canCheck) actions += `<button class="pkr-btn" onclick="pokerAction('check')">让牌</button>`;
-    else if (canCall) actions += `<button class="pkr-btn" onclick="pokerAction('call')">跟注 ${callAmt}</button>`;
-    if (maxRaise > s.currentBet) {
-      actions += `<input class="pkr-raise-input" type="number" id="pkr-raise-amt" value="${Math.min(minRaise,maxRaise)}" min="${Math.min(minRaise,maxRaise)}" max="${maxRaise}">`;
-      actions += `<button class="pkr-btn primary" onclick="pokerAction('raise',document.getElementById('pkr-raise-amt').value)">加注</button>`;
-      actions += `<button class="pkr-btn" onclick="pokerAction('allin')">ALL-IN (${me.chips})</button>`;
+    const isHost = s.hostId===(currentUser?currentUser.id:null);
+    ctrl.style.display='flex';
+    ctrl.innerHTML=`<button class="pkr-btn danger" onclick="pokerLeave()">离开房间</button>${isHost?'<button class="pkr-btn primary" onclick="pokerStart()">开始游戏</button>':'<span style="color:#555;font-size:.82rem">等待房主开始...</span>'}`;
+    document.getElementById('poker-info').textContent='等待中...';
+  } else if (me&&!me.folded&&s.actionOn===(currentUser?currentUser.id:null)) {
+    ctrl.style.display='flex';
+    const callAmt=s.currentBet-(me.betTotal||0), canCheck=callAmt===0, canCall=callAmt>0&&callAmt<=me.chips;
+    const minRaise=s.currentBet+Math.max(s.minRaise,s.bb), maxRaise=me.chips+me.betTotal;
+    let acts=`<button class="pkr-btn danger" onclick="pokerAction('fold')">弃牌</button>`;
+    if (canCheck) acts+=`<button class="pkr-btn" onclick="pokerAction('check')">让牌</button>`;
+    else if (canCall) acts+=`<button class="pkr-btn" onclick="pokerAction('call')">跟注 ${callAmt}</button>`;
+    if (maxRaise>s.currentBet) {
+      acts+=`<input class="pkr-raise-input" type="number" id="pkr-raise-amt" value="${Math.min(minRaise,maxRaise)}" min="${Math.min(minRaise,maxRaise)}" max="${maxRaise}">`;
+      acts+=`<button class="pkr-btn primary" onclick="pokerAction('raise',document.getElementById('pkr-raise-amt').value)">加注</button>`;
+      acts+=`<button class="pkr-btn" onclick="pokerAction('allin')">ALL-IN (${me.chips})</button>`;
     }
-    ctrl.innerHTML = actions;
-    document.getElementById('poker-info').textContent = '轮到你行动';
-  } else if (me && !me.folded && me.allIn) {
-    ctrl.style.display = 'flex';
-    ctrl.innerHTML = `<span style="color:#888;font-size:.85rem">已全下，等待牌局结束</span>`;
-    document.getElementById('poker-info').textContent = '';
-  } else if (me && me.folded) {
-    ctrl.style.display = 'flex';
-    ctrl.innerHTML = `<span style="color:#888;font-size:.85rem">你已弃牌</span>`;
-    document.getElementById('poker-info').textContent = '';
+    ctrl.innerHTML=acts;
+    document.getElementById('poker-info').textContent='轮到你行动';
+  } else if (me&&me.allIn) {
+    ctrl.style.display='flex';
+    ctrl.innerHTML='<span style="color:#888;font-size:.85rem">已全下，等待牌局结束</span>';
+    document.getElementById('poker-info').textContent='';
+  } else if (me&&me.folded) {
+    ctrl.style.display='flex';
+    ctrl.innerHTML='<span style="color:#888;font-size:.85rem">你已弃牌</span>';
+    document.getElementById('poker-info').textContent='';
   } else {
-    ctrl.style.display = 'flex';
-    ctrl.innerHTML = `<span style="color:#888;font-size:.85rem">等待其他玩家行动...</span>`;
-    if (s.phase==='showdown') document.getElementById('poker-info').textContent = '';
-    else document.getElementById('poker-info').textContent = s.phase==='waiting'?'':`${s.phase==='preflop'?'翻牌前':s.phase==='flop'?'翻牌':s.phase==='turn'?'转牌':'河牌'}圈`;
+    ctrl.style.display='flex';
+    ctrl.innerHTML='<span style="color:#888;font-size:.85rem">等待其他玩家行动...</span>';
+    document.getElementById('poker-info').textContent='';
   }
 }
 
