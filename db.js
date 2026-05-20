@@ -263,6 +263,12 @@ async function updateUserPassword(userId, hash) {
   await run('UPDATE users SET password_hash = ? WHERE id = ?', [hash, userId]);
 }
 
+async function deleteUser(userId) {
+  await run('DELETE FROM messages WHERE sender_id = ? OR receiver_id = ?', [userId, userId]);
+  await run('DELETE FROM friends WHERE user_id = ? OR friend_id = ?', [userId, userId]);
+  await run('DELETE FROM users WHERE id = ?', [userId]);
+}
+
 initSchema();
 
 module.exports = {
@@ -270,5 +276,5 @@ module.exports = {
   sendFriendRequest, getFriendRequests, getFriends, acceptFriendRequest, declineFriendRequest,
   saveMessage, getMessages, getFriendStatus,
   addXp, levelForXp, xpForNextLevel, XP_MULTIPLIER,
-  getAllUsers, updateUserRole, updateUserXp, updateUserPassword,
+  getAllUsers, updateUserRole, updateUserXp, updateUserPassword, deleteUser,
 };

@@ -65,6 +65,7 @@ app.post('/api/guest-login', async (req, res) => {
   req.session.userId = user.id;
   req.session.username = user.username;
   req.session.role = user.role;
+  req.session.is_guest = 1;
   res.json({ id: user.id, uid: user.uid, username: user.username, role: user.role, xp: user.xp });
 });
 
@@ -223,11 +224,19 @@ io.use((socket, next) => {
   }
 });
 
+const guestSockets = {};
+
 io.on('connection', (socket) => {
   const userId = socket.request.session.userId;
   const username = socket.request.session.username;
+  const isGuest = socket.request.session.is_guest;
   socket.join(`user:${userId}`);
   console.log(`${username} 连接: ${socket.id}`);
+
+  if (isGuest) {
+    if (!guestSockets[userId]) guestSockets[userId] = new Set();
+    guestSockets[userId].add(socket.id);
+  }
 
   socket.on('private message', async ({ receiverId, content }) => {
     const msg = { senderId: userId, receiverId, content, createdAt: new Date().toISOString() };
@@ -240,6 +249,13 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log(`${username} 断开: ${socket.id}`);
+    if (isGuest && guestSockets[userId]) {
+      guestSockets[userId].delete(socket.id);
+      if (guestSockets[userId].size === 0) {
+        delete guestSockets[userId];
+        db.deleteUser(userId);
+      }
+    }
   });
 });
 
