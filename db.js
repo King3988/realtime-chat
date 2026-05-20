@@ -3,7 +3,6 @@ const path = require('path');
 
 const isProd = !!process.env.DATABASE_URL;
 
-// === SQLite backend (development) ===
 let sqlite;
 if (!isProd) {
   const Database = require('better-sqlite3');
@@ -11,14 +10,12 @@ if (!isProd) {
   sqlite.pragma('journal_mode = WAL');
 }
 
-// === PostgreSQL backend (production) ===
 let pgPool;
 if (isProd) {
   const { Pool } = require('pg');
   pgPool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
 }
 
-// === Schema init ===
 async function initSchema() {
   if (isProd) {
     await pgPool.query(`
@@ -28,6 +25,8 @@ async function initSchema() {
         username TEXT UNIQUE NOT NULL,
         password_hash TEXT,
         is_guest INTEGER DEFAULT 0,
+        role TEXT DEFAULT 'user',
+        xp INTEGER DEFAULT 0,
         created_at TIMESTAMP DEFAULT NOW()
       );
       CREATE TABLE IF NOT EXISTS friends (
@@ -46,6 +45,8 @@ async function initSchema() {
         created_at TIMESTAMP DEFAULT NOW()
       );
     `);
+    await pgPool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user'`);
+    await pgPool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS xp INTEGER DEFAULT 0`);
   } else {
     sqlite.exec(`
       CREATE TABLE IF NOT EXISTS users (
@@ -54,6 +55,8 @@ async function initSchema() {
         username TEXT UNIQUE NOT NULL,
         password_hash TEXT,
         is_guest INTEGER DEFAULT 0,
+        role TEXT DEFAULT 'user',
+        xp INTEGER DEFAULT 0,
         created_at TEXT DEFAULT (datetime('now'))
       );
       CREATE TABLE IF NOT EXISTS friends (
@@ -72,10 +75,12 @@ async function initSchema() {
         created_at TEXT DEFAULT (datetime('now'))
       );
     `);
+    const cols = sqlite.prepare("PRAGMA table_info('users')").all().map(c => c.name);
+    if (!cols.includes('role')) sqlite.exec("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'");
+    if (!cols.includes('xp')) sqlite.exec("ALTER TABLE users ADD COLUMN xp INTEGER DEFAULT 0");
   }
 }
 
-// === Helpers ===
 function generateUid() {
   return 'U' + crypto.randomBytes(4).toString('hex').toUpperCase();
 }
@@ -112,16 +117,37 @@ async function run(sql, params = []) {
   return { changes: info.changes, lastInsertRowid: info.lastInsertRowid };
 }
 
+// === XP / Level ===
+const XP_MULTIPLIER = { user: 1, vip: 2, svip: 3, admin: 1 };
+
+function levelForXp(xp) {
+  if (xp < 100) return 1;
+  return Math.floor(Math.sqrt(xp / 50)) + 1;
+}
+
+function xpForNextLevel(level) {
+  return level * level * 50;
+}
+
+async function addXp(userId, baseXp) {
+  const user = await get('SELECT role, xp FROM users WHERE id = ?', [userId]);
+  if (!user) return;
+  const mult = XP_MULTIPLIER[user.role] || 1;
+  const gained = Math.round(baseXp * mult);
+  await run('UPDATE users SET xp = xp + ? WHERE id = ?', [gained, userId]);
+  return { gained, total: (user.xp || 0) + gained };
+}
+
 // === Public API ===
 async function createUser(username, passwordHash) {
   const uid = generateUid();
-  await run('INSERT INTO users (uid, username, password_hash) VALUES (?, ?, ?)', [uid, username, passwordHash]);
+  await run('INSERT INTO users (uid, username, password_hash, role, xp) VALUES (?, ?, ?, ?, ?)', [uid, username, passwordHash, 'user', 0]);
   return getUserByUsername(username);
 }
 
 async function createGuestUser(username) {
   const uid = generateUid();
-  await run('INSERT INTO users (uid, username, is_guest) VALUES (?, ?, 1)', [uid, username]);
+  await run('INSERT INTO users (uid, username, is_guest, role, xp) VALUES (?, ?, 1, ?, ?)', [uid, username, 'user', 0]);
   return getUserByUsername(username);
 }
 
@@ -130,13 +156,13 @@ async function getUserByUsername(username) {
 }
 
 async function getUserById(id) {
-  return get('SELECT id, uid, username, is_guest, created_at FROM users WHERE id = ?', [id]);
+  return get('SELECT id, uid, username, is_guest, role, xp, created_at FROM users WHERE id = ?', [id]);
 }
 
 async function searchUsers(keyword, excludeId) {
   const like = isProd ? 'ILIKE' : 'LIKE';
   const rows = await query(
-    `SELECT id, uid, username, is_guest, created_at FROM users WHERE (username ${like} ? OR uid ${like} ?) AND id != ? ORDER BY username ASC LIMIT 20`,
+    `SELECT id, uid, username, is_guest, role, xp FROM users WHERE (username ${like} ? OR uid ${like} ?) AND id != ? ORDER BY username ASC LIMIT 20`,
     [`%${keyword}%`, `%${keyword}%`, excludeId]
   );
   return rows.rows;
@@ -145,7 +171,6 @@ async function searchUsers(keyword, excludeId) {
 async function sendFriendRequest(userId, friendId) {
   const existing = await get('SELECT * FROM friends WHERE user_id = ? AND friend_id = ?', [userId, friendId]);
   if (existing) return existing;
-
   const reverse = await get('SELECT * FROM friends WHERE user_id = ? AND friend_id = ?', [friendId, userId]);
   if (reverse) {
     if (reverse.status === 'pending') {
@@ -154,7 +179,6 @@ async function sendFriendRequest(userId, friendId) {
     }
     return reverse;
   }
-
   await run('INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, ?)', [userId, friendId, 'pending']);
   return { status: 'pending' };
 }
@@ -215,10 +239,32 @@ async function getFriendStatus(userId, friendId) {
   return row ? row.status : null;
 }
 
+// === Admin ===
+async function getAllUsers(page = 1, limit = 50) {
+  const offset = (page - 1) * limit;
+  const rows = await query(
+    `SELECT id, uid, username, is_guest, role, xp, created_at FROM users ORDER BY id ASC LIMIT ? OFFSET ?`,
+    [limit, offset]
+  );
+  const countRow = await get('SELECT COUNT(*) as total FROM users');
+  return { users: rows.rows, total: countRow ? countRow.total : 0 };
+}
+
+async function updateUserRole(userId, role) {
+  await run('UPDATE users SET role = ? WHERE id = ?', [role, userId]);
+}
+
+async function updateUserXp(userId, xp) {
+  const target = Math.max(0, Math.floor(xp));
+  await run('UPDATE users SET xp = ? WHERE id = ?', [target, userId]);
+}
+
 initSchema();
 
 module.exports = {
   createUser, getUserByUsername, getUserById, searchUsers, createGuestUser,
   sendFriendRequest, getFriendRequests, getFriends, acceptFriendRequest, declineFriendRequest,
   saveMessage, getMessages, getFriendStatus,
+  addXp, levelForXp, xpForNextLevel, XP_MULTIPLIER,
+  getAllUsers, updateUserRole, updateUserXp,
 };

@@ -8,7 +8,6 @@
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{font:14px/1.5 system-ui,sans-serif;background:#1a1a2e;color:#eee;display:flex}
-/* Sidebar */
 #sidebar{position:fixed;left:0;top:0;bottom:0;width:200px;background:#0f3460;display:flex;flex-direction:column;z-index:50}
 #logo{padding:20px 16px;font-size:1.2rem;font-weight:700;color:#e94560;border-bottom:1px solid #1a1a40}
 #nav{flex:1;padding:8px 0;overflow-y:auto}
@@ -16,23 +15,29 @@ body{font:14px/1.5 system-ui,sans-serif;background:#1a1a2e;color:#eee;display:fl
 .nav-item:hover{background:#1a1a40;color:#eee}
 .nav-item.active{background:#1a1a40;color:#e94560;border-left-color:#e94560}
 .nav-item .badge{background:#e94560;color:#fff;font-size:.7rem;padding:1px 7px;border-radius:10px;margin-left:auto}
-/* Main */
+.nav-item.hidden{display:none}
 #main{margin-left:200px;flex:1;min-height:100vh;display:flex;flex-direction:column}
 #topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:flex-end;padding:12px 32px;background:#16213ee0;backdrop-filter:blur(8px);border-bottom:1px solid #1a1a40;gap:12px}
-#user-info{display:flex;align-items:center;gap:10px}
-#user-info .uid{color:#666;font-size:.8rem}
+#user-info{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#user-info .uid{color:#555;font-size:.78rem}
+.role-badge{font-size:.7rem;padding:1px 8px;border-radius:10px;font-weight:600}
+.role-user{background:#333;color:#aaa}
+.role-vip{background:#b8860b;color:#fff}
+.role-svip{background:#e94560;color:#fff}
+.role-admin{background:#4a0080;color:#fff}
+.xp-text{color:#888;font-size:.78rem}
 .btn{padding:6px 16px;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;transition:.2s;display:inline-flex;align-items:center;gap:4px}
 .btn-primary{background:#e94560;color:#fff}
 .btn-primary:hover{background:#c73650}
 .btn-ghost{background:transparent;color:#e94560;border:1px solid #e94560}
 .btn-ghost:hover{background:#e94560;color:#fff}
 .btn-sm{font-size:.8rem;padding:4px 10px}
-/* Sections */
+.btn-danger{background:#c0392b;color:#fff}
+.btn-danger:hover{background:#a93226}
 section{padding:48px 48px 80px;min-height:100vh}
 section:nth-child(even){background:#15152a}
 .section-title{font-size:1.6rem;color:#e94560;margin-bottom:8px}
 .section-sub{color:#666;margin-bottom:32px;font-size:.95rem}
-/* Home */
 #sec-home{display:flex;flex-direction:column;justify-content:center;text-align:center;min-height:100vh}
 #sec-home h1{font-size:2.8rem;color:#e94560;margin-bottom:12px}
 #sec-home p{color:#888;max-width:520px;margin:0 auto 32px;font-size:1.05rem}
@@ -43,7 +48,6 @@ section:nth-child(even){background:#15152a}
 .feature-card h3{font-size:1rem;margin-bottom:4px}
 .feature-card p{color:#888;font-size:.82rem}
 #home-user-info{color:#888;margin-bottom:24px}
-/* Friends section */
 #sec-friends .friends-layout{display:flex;gap:24px;height:520px}
 .friends-sidebar{width:300px;flex-shrink:0;background:#16213e;border-radius:12px;padding:16px;display:flex;flex-direction:column}
 .friends-sidebar .tabs{display:flex;gap:4px;margin-bottom:12px;background:#0f3460;border-radius:8px;padding:3px}
@@ -59,7 +63,6 @@ section:nth-child(even){background:#15152a}
 .search-area input{width:100%;padding:8px 12px;border:none;border-radius:6px;background:#0f3460;color:#eee;font-size:.85rem;outline:none;margin-bottom:8px}
 .search-area input::placeholder{color:#555}
 .search-result{padding:8px 10px;background:#0f3460;border-radius:6px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between}
-/* Chat section */
 #sec-chat .chat-layout{display:flex;gap:24px;height:520px}
 .chat-friends{width:220px;flex-shrink:0;background:#16213e;border-radius:12px;padding:12px;overflow-y:auto}
 .chat-friends .cf-item{padding:10px 12px;border-radius:6px;cursor:pointer;transition:.2s;margin-bottom:2px}
@@ -68,7 +71,7 @@ section:nth-child(even){background:#15152a}
 .chat-friends .cf-item .cf-name{font-size:.9rem}
 .chat-friends .cf-item .cf-uid{color:#555;font-size:.75rem}
 .chat-area{flex:1;background:#16213e;border-radius:12px;display:flex;flex-direction:column;min-width:0}
-.chat-header{padding:14px 20px;border-bottom:1px solid #1a1a40;font-weight:600}
+.chat-header{padding:14px 20px;border-bottom:1px solid #1a1a40;font-weight:600;display:flex;justify-content:space-between;align-items:center}
 .chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:6px}
 .chat-input-area{display:flex;gap:8px;padding:12px 16px;border-top:1px solid #1a1a40}
 .chat-input-area input{flex:1;padding:10px 14px;border:none;border-radius:8px;background:#0f3460;color:#eee;font-size:.9rem;outline:none}
@@ -78,8 +81,8 @@ section:nth-child(even){background:#15152a}
 .msg-bubble.received{background:#0f3460;align-self:flex-start;border-bottom-left-radius:4px}
 .msg-bubble .msg-time{font-size:.65rem;color:rgba(255,255,255,.5);margin-top:3px;text-align:right}
 .msg-bubble.received .msg-time{color:#666}
+.msg-bubble .xp-tag{font-size:.65rem;color:#f1c40f;margin-left:6px}
 .chat-placeholder{flex:1;display:flex;align-items:center;justify-content:center;color:#555;font-size:.9rem}
-/* Games section */
 #sec-games .games-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px}
 .game-card{background:#16213e;border-radius:12px;padding:24px;text-align:center;transition:.3s;cursor:pointer}
 .game-card:hover{transform:translateY(-4px);background:#1a1a50}
@@ -87,17 +90,21 @@ section:nth-child(even){background:#15152a}
 .game-card h3{font-size:1.05rem;margin-bottom:6px}
 .game-card p{color:#888;font-size:.85rem;margin-bottom:12px}
 .game-card .play-area{background:#0f3460;border-radius:8px;padding:16px;margin-top:8px}
-.game-card .play-area .choice{font-size:2.5rem;margin:8px;cursor:pointer;transition:.2s;display:inline-block}
-.game-card .play-area .choice:hover{transform:scale(1.2)}
-.game-card .play-area .result{font-size:.95rem;margin-top:8px;color:#e94560;font-weight:600}
-/* RPS */
 .rps-choices{display:flex;justify-content:center;gap:12px;margin:8px 0}
 .rps-btn{width:60px;height:60px;border-radius:50%;border:2px solid #333;background:#0f3460;font-size:1.6rem;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center}
 .rps-btn:hover{border-color:#e94560;transform:scale(1.1)}
 .rps-btn.selected{border-color:#e94560;background:#1a1a50}
 .rps-result{font-size:1rem;min-height:1.5em}
 .rps-score{color:#888;font-size:.85rem;margin-top:4px}
-/* Modal */
+/* Admin */
+#sec-admin .admin-table-wrap{overflow-x:auto;background:#16213e;border-radius:12px;padding:16px}
+#sec-admin table{width:100%;border-collapse:collapse;font-size:.85rem}
+#sec-admin th,#sec-admin td{padding:10px 12px;text-align:left;border-bottom:1px solid #1a1a40}
+#sec-admin th{color:#888;font-weight:600;font-size:.8rem}
+#sec-admin tr:hover td{background:#0f3460}
+#sec-admin select{padding:4px 6px;border:none;border-radius:4px;background:#0f3460;color:#eee;font-size:.8rem;outline:none;cursor:pointer}
+#sec-admin .xp-input{width:70px;padding:4px 6px;border:none;border-radius:4px;background:#0f3460;color:#eee;font-size:.8rem;text-align:center;outline:none}
+#sec-admin .xp-input:focus{border:1px solid #e94560}
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);align-items:center;justify-content:center;z-index:200}
 .modal-overlay.show{display:flex}
 .modal{background:#16213e;border-radius:12px;padding:28px;width:360px;max-width:92vw}
@@ -122,6 +129,7 @@ section:nth-child(even){background:#15152a}
     <div class="nav-item" data-target="friends">👥 好友</div>
     <div class="nav-item" data-target="chat">💬 消息</div>
     <div class="nav-item" data-target="games">🎮 游戏</div>
+    <div class="nav-item hidden" data-target="admin" id="nav-admin">🔧 管理</div>
   </div>
 </div>
 
@@ -130,11 +138,10 @@ section:nth-child(even){background:#15152a}
     <div id="user-info"></div>
   </div>
 
-  <!-- Home -->
   <section id="sec-home">
     <div id="home-guest">
       <h1>欢迎来到 MyCommunity</h1>
-      <p>结交好友，实时聊天，还有小游戏等你来玩。</p>
+      <p>结交好友，实时聊天，升级成长。</p>
       <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
         <button class="btn btn-primary" onclick="showModal('login')">登录</button>
         <button class="btn btn-ghost" onclick="showModal('register')">注册</button>
@@ -145,14 +152,13 @@ section:nth-child(even){background:#15152a}
       <h1>欢迎回来</h1>
       <p id="home-user-info"></p>
       <div class="features">
-        <div class="feature-card"><div class="icon">👥</div><h3>好友</h3><p>搜索添加好友，建立社交圈</p></div>
-        <div class="feature-card"><div class="icon">💬</div><h3>消息</h3><p>与好友实时私聊</p></div>
-        <div class="feature-card"><div class="icon">🎮</div><h3>游戏</h3><p>休闲小游戏放松一下</p></div>
+        <div class="feature-card"><div class="icon">👥</div><h3>好友</h3><p>搜索添加好友</p></div>
+        <div class="feature-card"><div class="icon">💬</div><h3>消息</h3><p>实时私聊</p></div>
+        <div class="feature-card"><div class="icon">🎮</div><h3>游戏</h3><p>休闲小游戏</p></div>
       </div>
     </div>
   </section>
 
-  <!-- Friends -->
   <section id="sec-friends">
     <h2 class="section-title">👥 好友</h2>
     <p class="section-sub">管理你的好友关系</p>
@@ -175,7 +181,6 @@ section:nth-child(even){background:#15152a}
     </div>
   </section>
 
-  <!-- Chat -->
   <section id="sec-chat">
     <h2 class="section-title">💬 消息</h2>
     <p class="section-sub">与好友实时私聊</p>
@@ -193,7 +198,6 @@ section:nth-child(even){background:#15152a}
     </div>
   </section>
 
-  <!-- Games -->
   <section id="sec-games">
     <h2 class="section-title">🎮 游戏</h2>
     <p class="section-sub">休闲小游戏，放松一下</p>
@@ -201,7 +205,7 @@ section:nth-child(even){background:#15152a}
       <div class="game-card">
         <div class="icon">✂️</div>
         <h3>石头剪刀布</h3>
-        <p>和电脑对决，三局两胜</p>
+        <p>和电脑对决</p>
         <div class="play-area">
           <div class="rps-choices">
             <button class="rps-btn" onclick="rpsPlay('rock')">🪨</button>
@@ -222,8 +226,7 @@ section:nth-child(even){background:#15152a}
             <button class="btn btn-primary btn-sm" onclick="guessNumber()">猜</button>
             <button class="btn btn-ghost btn-sm" onclick="resetGuess()">重置</button>
           </div>
-          <div id="guess-result" style="color:#888;font-size:.85rem;min-height:1.5em">输入数字开始猜</div>
-          <div id="guess-count" style="color:#555;font-size:.75rem"></div>
+          <div id="guess-result" style="color:#888;font-size:.85rem;min-height:1.5em"></div>
         </div>
       </div>
       <div class="game-card">
@@ -236,14 +239,24 @@ section:nth-child(even){background:#15152a}
             <button class="btn btn-primary btn-sm" onclick="coinFlip('正面')">正面</button>
             <button class="btn btn-ghost btn-sm" onclick="coinFlip('反面')">反面</button>
           </div>
-          <div id="coin-message" style="color:#888;font-size:.85rem;margin-top:6px">选择正反面</div>
+          <div id="coin-message" style="color:#888;font-size:.85rem;margin-top:6px"></div>
         </div>
       </div>
     </div>
   </section>
+
+  <section id="sec-admin">
+    <h2 class="section-title">🔧 管理面板</h2>
+    <p class="section-sub">用户管理</p>
+    <div class="admin-table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>UID</th><th>用户名</th><th>角色</th><th>等级</th><th>经验</th><th>操作</th></tr></thead>
+        <tbody id="admin-user-list"></tbody>
+      </table>
+    </div>
+  </section>
 </div>
 
-<!-- Modal -->
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal">
     <h2 id="modal-title">登录</h2>
@@ -255,39 +268,33 @@ section:nth-child(even){background:#15152a}
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-// === Navigation (scroll) ===
-let currentUser = null;
-let socket = null;
-let selectedChatFriend = null;
-let allFriends = [];
+let currentUser = null, socket = null, selectedChatFriend = null, allFriends = [];
 
+// Navigation
 document.querySelectorAll('.nav-item').forEach(el => {
   el.addEventListener('click', () => {
-    const target = document.getElementById('sec-' + el.dataset.target);
-    if (target) target.scrollIntoView({ behavior: 'smooth' });
+    const t = document.getElementById('sec-' + el.dataset.target);
+    if (t) t.scrollIntoView({behavior:'smooth'});
   });
 });
-
-// Highlight active nav on scroll
 const observer = new IntersectionObserver(entries => {
   entries.forEach(e => {
     if (e.isIntersecting) {
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-      const id = e.target.id.replace('sec-', '');
-      const nav = document.querySelector(`.nav-item[data-target="${id}"]`);
+      const nav = document.querySelector(`.nav-item[data-target="${e.target.id.replace('sec-','')}"]`);
       if (nav) nav.classList.add('active');
     }
   });
-}, { threshold: 0.3 });
+}, {threshold:0.3});
 document.querySelectorAll('section').forEach(s => observer.observe(s));
 
-// === Init ===
 async function init() {
-  const res = await fetch('/api/me');
-  const data = await res.json();
-  if (data.user) {
-    currentUser = data.user;
+  const r = await fetch('/api/me');
+  const d = await r.json();
+  if (d.user) {
+    currentUser = d.user;
     renderUserInfo();
+    if (currentUser.role === 'admin') document.getElementById('nav-admin').classList.remove('hidden');
     connectSocket();
   }
   renderHome();
@@ -295,14 +302,19 @@ async function init() {
 }
 init();
 
-// === User Info ===
+function roleHtml(role) {
+  const labels = {user:'用户',vip:'VIP',svip:'SVIP',admin:'超管'};
+  return `<span class="role-badge role-${role}">${labels[role]||role}</span>`;
+}
+
 function renderUserInfo() {
   const el = document.getElementById('user-info');
   if (!currentUser) {
     el.innerHTML = `<button class="btn btn-primary btn-sm" onclick="showModal('login')">登录</button><button class="btn btn-ghost btn-sm" onclick="showModal('register')">注册</button><button class="btn btn-ghost btn-sm" onclick="guestLogin()">游客</button>`;
     return;
   }
-  el.innerHTML = `<span>${escapeHtml(currentUser.username)}</span><span class="uid">${currentUser.uid}</span><button class="btn btn-ghost btn-sm" onclick="logout()">退出</button>`;
+  const lv = currentUser.level || 1;
+  el.innerHTML = `${roleHtml(currentUser.role)} <span>${escapeHtml(currentUser.username)}</span><span class="uid">${currentUser.uid}</span><span class="xp-text">Lv.${lv} (${currentUser.xp||0}XP)</span><button class="btn btn-ghost btn-sm" onclick="logout()">退出</button>`;
 }
 
 function renderHome() {
@@ -310,11 +322,11 @@ function renderHome() {
   const hu = document.getElementById('home-user');
   if (currentUser) {
     hu.style.display = '';
-    document.getElementById('home-user-info').innerHTML = `UID: ${currentUser.uid} | 用户名: ${escapeHtml(currentUser.username)}`;
+    const lv = currentUser.level || 1;
+    document.getElementById('home-user-info').innerHTML = `UID: ${currentUser.uid} | ${roleHtml(currentUser.role)} | 等级 Lv.${lv} | 经验 ${currentUser.xp||0}`;
   } else hu.style.display = 'none';
 }
 
-// === Auth ===
 function showModal(type) {
   document.getElementById('modal-error').style.display = 'none';
   document.getElementById('modal-overlay').classList.add('show');
@@ -334,36 +346,33 @@ document.getElementById('modal-overlay').addEventListener('click', e => {
 });
 
 async function doLogin() {
-  const u = document.getElementById('m-user').value;
-  const p = document.getElementById('m-pass').value;
-  const r = await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+  const r = await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:document.getElementById('m-user').value,password:document.getElementById('m-pass').value})});
   const d = await r.json();
   if (d.error) return showModalError(d.error);
-  currentUser = d;
-  document.getElementById('modal-overlay').classList.remove('show');
-  renderUserInfo(); renderHome(); connectSocket(); loadFriends();
+  afterAuth(d);
 }
 async function doRegister() {
-  const u = document.getElementById('m-user').value;
-  const p = document.getElementById('m-pass').value;
-  const r = await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+  const r = await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:document.getElementById('m-user').value,password:document.getElementById('m-pass').value})});
   const d = await r.json();
   if (d.error) return showModalError(d.error);
-  currentUser = d;
-  document.getElementById('modal-overlay').classList.remove('show');
-  renderUserInfo(); renderHome(); connectSocket(); loadFriends();
+  afterAuth(d);
 }
 async function guestLogin() {
   const r = await fetch('/api/guest-login',{method:'POST'});
   const d = await r.json();
+  afterAuth(d);
+}
+function afterAuth(d) {
+  document.getElementById('modal-overlay').classList.remove('show');
   currentUser = d;
+  if (currentUser.role === 'admin') document.getElementById('nav-admin').classList.remove('hidden');
   renderUserInfo(); renderHome(); connectSocket(); loadFriends();
 }
 async function logout() {
   await fetch('/api/logout',{method:'POST'});
-  currentUser = null;
-  if (socket) { socket.close(); socket = null; }
+  currentUser = null; if (socket) { socket.close(); socket = null; }
   selectedChatFriend = null; allFriends = [];
+  document.getElementById('nav-admin').classList.add('hidden');
   renderUserInfo(); renderHome();
   document.getElementById('sec-home').scrollIntoView({behavior:'smooth'});
 }
@@ -372,7 +381,6 @@ function showModalError(msg) {
   el.textContent = msg; el.style.display = 'block';
 }
 
-// === Socket.io ===
 function connectSocket() {
   if (socket) socket.close();
   socket = io();
@@ -385,7 +393,6 @@ function connectSocket() {
   socket.on('friend added', () => { loadFriends(); loadChatFriends(); });
 }
 
-// === Friends ===
 async function loadFriends() {
   if (!currentUser) return;
   const rr = await fetch('/api/friends/requests');
@@ -393,16 +400,13 @@ async function loadFriends() {
   const badge = document.getElementById('req-badge');
   if (rd.requests && rd.requests.length > 0) { badge.textContent = rd.requests.length; badge.style.display = 'inline'; }
   else badge.style.display = 'none';
-  const res = await fetch('/api/friends');
-  const data = await res.json();
-  allFriends = data.friends || [];
-  renderFriendList();
-  renderFriendRequests();
-}
-function renderFriendList() {
+  const r = await fetch('/api/friends');
+  const d = await r.json();
+  allFriends = d.friends || [];
   const el = document.getElementById('ftab-list');
-  if (!allFriends.length) { el.innerHTML = '<div class="no-data">暂无好友，去"添加"标签页搜索吧</div>'; return; }
+  if (!allFriends.length) { el.innerHTML = '<div class="no-data">暂无好友</div>'; return; }
   el.innerHTML = allFriends.map(f => `<div class="friend-item"><div><span class="name">${escapeHtml(f.username)}</span><span class="uid-text">${f.uid}</span></div></div>`).join('');
+  renderFriendRequests();
 }
 function renderFriendRequests() {
   fetch('/api/friends/requests').then(r=>r.json()).then(data => {
@@ -411,133 +415,139 @@ function renderFriendRequests() {
     el.innerHTML = data.requests.map(f => `<div class="friend-item"><div><span class="name">${escapeHtml(f.username)}</span><span class="uid-text">${f.uid}</span></div><div style="display:flex;gap:4px"><button class="btn btn-primary btn-sm" onclick="acceptReq(${f.id})">接受</button><button class="btn btn-ghost btn-sm" onclick="declineReq(${f.id})">拒绝</button></div></div>`).join('');
   });
 }
-async function acceptReq(friendId) {
-  await fetch('/api/friends/accept',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({friendId})});
-  loadFriends(); loadChatFriends();
-}
-async function declineReq(friendId) {
-  await fetch('/api/friends/decline',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({friendId})});
-  loadFriends();
-}
+async function acceptReq(fid) { await fetch('/api/friends/accept',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({friendId:fid})}); loadFriends(); loadChatFriends(); }
+async function declineReq(fid) { await fetch('/api/friends/decline',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({friendId:fid})}); loadFriends(); }
 async function searchUsers(q) {
   const el = document.getElementById('search-results');
-  if (!q || q.length < 1) { el.innerHTML = ''; return; }
+  if (!q||q.length<1) { el.innerHTML=''; return; }
   const r = await fetch('/api/users/search?q='+encodeURIComponent(q));
   const d = await r.json();
-  if (!d.users || !d.users.length) { el.innerHTML = '<div class="no-data" style="padding:10px">未找到用户</div>'; return; }
+  if (!d.users||!d.users.length) { el.innerHTML='<div class="no-data" style="padding:10px">未找到用户</div>'; return; }
   el.innerHTML = d.users.map(u => {
-    const isFriend = allFriends.some(f => f.id === u.id);
-    const isSelf = u.id === currentUser.id;
+    const isFriend = allFriends.some(f=>f.id===u.id), isSelf = u.id===currentUser.id;
     const btn = isSelf ? '' : (isFriend ? '<button class="btn btn-sm" style="background:#333;color:#888;cursor:default" disabled>已是好友</button>' : `<button class="btn btn-primary btn-sm" onclick="addFriend(${u.id})">添加</button>`);
     return `<div class="search-result"><div><span>${escapeHtml(u.username)}</span><span class="uid-text">${u.uid}</span></div>${btn}</div>`;
   }).join('');
 }
-async function addFriend(friendId) {
-  const r = await fetch('/api/friends/request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({friendId})});
+async function addFriend(fid) {
+  const r = await fetch('/api/friends/request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({friendId:fid})});
   const d = await r.json();
   if (d.error) return alert(d.error);
-  if (d.status === 'accepted') { alert('对方已添加你为好友！'); loadFriends(); loadChatFriends(); }
+  if (d.status==='accepted') { alert('对方已添加你为好友！'); loadFriends(); loadChatFriends(); }
   else alert('好友请求已发送');
 }
 document.querySelectorAll('.friends-sidebar .tabs .tab').forEach(tab => {
   tab.addEventListener('click', () => {
-    document.querySelectorAll('.friends-sidebar .tabs .tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.friends-sidebar .tabs .tab').forEach(t=>t.classList.remove('active'));
     tab.classList.add('active');
-    document.querySelectorAll('.friends-sidebar .tab-content').forEach(c => c.style.display = 'none');
-    document.getElementById('ftab-'+tab.dataset.ftab).style.display = '';
-    if (tab.dataset.ftab === 'requests') renderFriendRequests();
+    document.querySelectorAll('.friends-sidebar .tab-content').forEach(c=>c.style.display='none');
+    document.getElementById('ftab-'+tab.dataset.ftab).style.display='';
+    if (tab.dataset.ftab==='requests') renderFriendRequests();
   });
 });
 
-// === Chat ===
 async function loadChatFriends() {
   if (!currentUser) return;
-  const r = await fetch('/api/friends');
-  const d = await r.json();
-  const friends = d.friends || [];
+  const r = await fetch('/api/friends'), d = await r.json(), friends = d.friends||[];
   const el = document.getElementById('chat-friends-list');
-  if (!friends.length) { el.innerHTML = '<div class="no-data" style="padding:20px">暂无好友</div>'; return; }
-  el.innerHTML = friends.map(f => `<div class="cf-item ${selectedChatFriend && selectedChatFriend.id === f.id ? 'active' : ''}" onclick="selectChatFriend(${f.id},'${escapeHtml(f.username)}','${f.uid}')"><div class="cf-name">${escapeHtml(f.username)}</div><div class="cf-uid">${f.uid}</div></div>`).join('');
+  if (!friends.length) { el.innerHTML='<div class="no-data" style="padding:20px">暂无好友</div>'; return; }
+  el.innerHTML = friends.map(f => `<div class="cf-item ${selectedChatFriend&&selectedChatFriend.id===f.id?'active':''}" onclick="selectChatFriend(${f.id},'${escapeHtml(f.username)}','${f.uid}')"><div class="cf-name">${escapeHtml(f.username)}</div><div class="cf-uid">${f.uid}</div></div>`).join('');
 }
-async function selectChatFriend(friendId, username, uid) {
-  selectedChatFriend = { id: friendId, username, uid };
-  document.querySelectorAll('.cf-item').forEach(e => e.classList.remove('active'));
+async function selectChatFriend(fid,un,uid) {
+  selectedChatFriend = {id:fid,username:un,uid};
+  document.querySelectorAll('.cf-item').forEach(e=>e.classList.remove('active'));
   if (event) event.currentTarget.classList.add('active');
-  document.getElementById('chat-header').textContent = `${username} (${uid})`;
+  document.getElementById('chat-header').textContent = `${un} (${uid})`;
   document.getElementById('chat-placeholder').style.display = 'none';
   document.getElementById('chat-messages').style.display = 'flex';
   document.getElementById('chat-input-area').style.display = 'flex';
   document.getElementById('chat-messages').innerHTML = '<div style="text-align:center;color:#555;padding:10px">加载中...</div>';
   document.getElementById('chat-input').focus();
-  const r = await fetch(`/api/messages/${friendId}`);
-  const d = await r.json();
+  const r = await fetch(`/api/messages/${fid}`), d = await r.json();
   document.getElementById('chat-messages').innerHTML = '';
-  (d.messages || []).forEach(m => appendMessage(m, m.senderId === currentUser.id));
+  (d.messages||[]).forEach(m => appendMessage(m, m.senderId === currentUser.id));
   scrollChat();
 }
-function appendMessage(msg, isSent) {
-  const el = document.getElementById('chat-messages');
-  const div = document.createElement('div');
-  div.className = 'msg-bubble ' + (isSent ? 'sent' : 'received');
-  div.innerHTML = `${escapeHtml(msg.content)}<div class="msg-time">${new Date(msg.createdAt).toLocaleTimeString()}</div>`;
-  el.appendChild(div);
-  scrollChat();
+function appendMessage(msg, sent) {
+  const el = document.getElementById('chat-messages'), div = document.createElement('div');
+  div.className = 'msg-bubble ' + (sent?'sent':'received');
+  let html = `${escapeHtml(msg.content)}<div class="msg-time">${new Date(msg.createdAt).toLocaleTimeString()}`;
+  if (msg.xpGained) html += ` <span class="xp-tag">+${msg.xpGained}XP</span>`;
+  html += '</div>';
+  div.innerHTML = html;
+  el.appendChild(div); scrollChat();
 }
-function scrollChat() { setTimeout(() => document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight, 50); }
+function scrollChat() { setTimeout(()=>document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight, 50); }
 async function sendMessage() {
-  const input = document.getElementById('chat-input');
-  const text = input.value.trim();
-  if (!text || !selectedChatFriend) return;
+  const input = document.getElementById('chat-input'), text = input.value.trim();
+  if (!text||!selectedChatFriend) return;
   input.value = '';
-  socket.emit('private message', { receiverId: selectedChatFriend.id, content: text });
+  socket.emit('private message', {receiverId:selectedChatFriend.id, content:text});
 }
 
-// === Games: RPS ===
-let rpsPlayerScore = 0, rpsCompScore = 0;
-function rpsPlay(player) {
-  const choices = ['rock','scissors','paper'];
-  const emojis = { rock:'🪨', scissors:'✂️', paper:'📄' };
-  const beats = { rock:'scissors', scissors:'paper', paper:'rock' };
-  const comp = choices[Math.floor(Math.random()*3)];
-  document.querySelectorAll('.rps-btn').forEach(b => b.classList.remove('selected'));
+// Games
+let rpsPS=0,rpsCS=0;
+function rpsPlay(p) {
+  const e={rock:'🪨',scissors:'✂️',paper:'📄'}, beats={rock:'scissors',scissors:'paper',paper:'rock'};
+  const c = ['rock','scissors','paper'][Math.floor(Math.random()*3)];
+  document.querySelectorAll('.rps-btn').forEach(b=>b.classList.remove('selected'));
   event.target.classList.add('selected');
-  let result;
-  if (player === comp) result = `平局！双方都出了 ${emojis[comp]}`;
-  else if (beats[player] === comp) { result = `你赢了！${emojis[player]} 胜 ${emojis[comp]}`; rpsPlayerScore++; }
-  else { result = `你输了！${emojis[comp]} 胜 ${emojis[player]}`; rpsCompScore++; }
-  document.getElementById('rps-result').textContent = result;
-  document.getElementById('rps-score').textContent = `玩家 ${rpsPlayerScore} : ${rpsCompScore} 电脑`;
+  let r;
+  if (p===c) r=`平局！双方都出了 ${e[c]}`;
+  else if (beats[p]===c) { r=`你赢了！${e[p]} 胜 ${e[c]}`; rpsPS++; }
+  else { r=`你输了！${e[c]} 胜 ${e[p]}`; rpsCS++; }
+  document.getElementById('rps-result').textContent = r;
+  document.getElementById('rps-score').textContent = `玩家 ${rpsPS} : ${rpsCS} 电脑`;
 }
-
-// === Games: Guess Number ===
-let guessTarget = Math.floor(Math.random()*100)+1, guessCount = 0;
+let guessT=Math.floor(Math.random()*100)+1, guessC=0;
 function guessNumber() {
-  const input = document.getElementById('guess-input');
-  const val = parseInt(input.value);
-  if (!val || val < 1 || val > 100) { document.getElementById('guess-result').textContent = '请输入 1-100 的数字'; return; }
-  guessCount++;
-  let msg;
-  if (val === guessTarget) msg = `🎉 猜对了！就是 ${guessTarget}，用了 ${guessCount} 次`;
-  else if (val < guessTarget) msg = `⬆️ 小了，再大一点 (第 ${guessCount} 次)`;
-  else msg = `⬇️ 大了，再小一点 (第 ${guessCount} 次)`;
-  document.getElementById('guess-result').textContent = msg;
-  if (val === guessTarget) { guessTarget = Math.floor(Math.random()*100)+1; guessCount = 0; }
+  const v = parseInt(document.getElementById('guess-input').value);
+  if (!v||v<1||v>100) { document.getElementById('guess-result').textContent='请输入 1-100 的数字'; return; }
+  guessC++;
+  let m;
+  if (v===guessT) { m=`🎉 猜对了！就是 ${guessT}，用了 ${guessC} 次`; guessT=Math.floor(Math.random()*100)+1; guessC=0; }
+  else if (v<guessT) m=`⬆️ 小了 (第 ${guessC} 次)`;
+  else m=`⬇️ 大了 (第 ${guessC} 次)`;
+  document.getElementById('guess-result').textContent = m;
 }
-function resetGuess() { guessTarget = Math.floor(Math.random()*100)+1; guessCount = 0; document.getElementById('guess-input').value = ''; document.getElementById('guess-result').textContent = '已重置，重新猜吧'; document.getElementById('guess-count').textContent = ''; }
+function resetGuess() { guessT=Math.floor(Math.random()*100)+1; guessC=0; document.getElementById('guess-input').value=''; document.getElementById('guess-result').textContent='已重置'; }
+function coinFlip(g) { const r=Math.random()<0.5?'正面':'反面'; document.getElementById('coin-result').textContent=r==='正面'?'😀':'😶'; document.getElementById('coin-message').textContent=r===g?'🎉 是'+r+'，你猜对了！':'😔 是'+r+'，你猜错了'; }
 
-// === Games: Coin Flip ===
-function coinFlip(guess) {
-  const result = Math.random() < 0.5 ? '正面' : '反面';
-  document.getElementById('coin-result').textContent = result === '正面' ? '😀' : '😶';
-  document.getElementById('coin-message').textContent = result === guess ? `🎉 是${result}，你猜对了！` : `😔 是${result}，你猜错了`;
+// Admin
+async function loadAdmin() {
+  if (!currentUser||currentUser.role!=='admin') return;
+  const r = await fetch('/api/admin/users'), d = await r.json();
+  const tbody = document.getElementById('admin-user-list');
+  if (!d.users||!d.users.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:#555">暂无用户</td></tr>'; return; }
+  tbody.innerHTML = d.users.map(u => `
+    <tr>
+      <td>${u.id}</td>
+      <td style="color:#888;font-size:.8rem">${u.uid}</td>
+      <td>${escapeHtml(u.username)}</td>
+      <td><select onchange="updateRole(${u.id},this.value)">
+        ${['user','vip','svip','admin'].map(r => `<option value="${r}" ${u.role===r?'selected':''}>${r}</option>`).join('')}
+      </select></td>
+      <td>Lv.${u.level||1}</td>
+      <td><input class="xp-input" type="number" value="${u.xp||0}" id="xp-${u.id}" min="0"></td>
+      <td><button class="btn btn-primary btn-sm" onclick="saveXp(${u.id})">保存XP</button></td>
+    </tr>
+  `).join('');
 }
+async function updateRole(id, role) {
+  await fetch(`/api/admin/users/${id}/role`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({role})});
+}
+async function saveXp(id) {
+  const xp = parseInt(document.getElementById('xp-'+id).value);
+  await fetch(`/api/admin/users/${id}/xp`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({xp})});
+  loadAdmin();
+}
+// Re-observe admin section for lazy load
+const adminObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting && currentUser && currentUser.role === 'admin') loadAdmin(); });
+}, {threshold:0.3});
+adminObserver.observe(document.getElementById('sec-admin'));
 
-// === Utils ===
-function escapeHtml(str) {
-  const d = document.createElement('div');
-  d.textContent = str;
-  return d.innerHTML;
-}
+function escapeHtml(str) { const d=document.createElement('div'); d.textContent=str; return d.innerHTML; }
 </script>
 </body>
 </html>

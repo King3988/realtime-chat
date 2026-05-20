@@ -42,7 +42,8 @@ app.post('/api/register', async (req, res) => {
   const user = await db.createUser(username, hash);
   req.session.userId = user.id;
   req.session.username = user.username;
-  res.json({ id: user.id, uid: user.uid, username: user.username });
+  req.session.role = user.role;
+  res.json({ id: user.id, uid: user.uid, username: user.username, role: user.role, xp: user.xp });
 });
 
 app.post('/api/login', async (req, res) => {
@@ -53,7 +54,8 @@ app.post('/api/login', async (req, res) => {
   }
   req.session.userId = user.id;
   req.session.username = user.username;
-  res.json({ id: user.id, uid: user.uid, username: user.username });
+  req.session.role = user.role;
+  res.json({ id: user.id, uid: user.uid, username: user.username, role: user.role, xp: user.xp });
 });
 
 app.post('/api/guest-login', async (req, res) => {
@@ -62,7 +64,8 @@ app.post('/api/guest-login', async (req, res) => {
   const user = await db.createGuestUser(username);
   req.session.userId = user.id;
   req.session.username = user.username;
-  res.json({ id: user.id, uid: user.uid, username: user.username });
+  req.session.role = user.role;
+  res.json({ id: user.id, uid: user.uid, username: user.username, role: user.role, xp: user.xp });
 });
 
 app.post('/api/logout', (req, res) => {
@@ -72,7 +75,9 @@ app.post('/api/logout', (req, res) => {
 app.get('/api/me', async (req, res) => {
   if (!req.session.userId) return res.json({ user: null });
   const user = await db.getUserById(req.session.userId);
-  res.json({ user });
+  const level = db.levelForXp(user.xp || 0);
+  const nextXp = db.xpForNextLevel(level);
+  res.json({ user: { ...user, level, nextXp } });
 });
 
 // === Friend Routes ===
@@ -154,6 +159,41 @@ app.get('/api/messages/:friendId', requireAuth, async (req, res) => {
   res.json({ messages: enriched, friend: friend ? { id: friend.id, uid: friend.uid, username: friend.username } : null });
 });
 
+// === Admin Routes ===
+
+function requireAdmin(req, res, next) {
+  if (!req.session.userId) return res.status(401).json({ error: '未登录' });
+  if (req.session.role !== 'admin') return res.status(403).json({ error: '无权限' });
+  next();
+}
+
+app.get('/api/admin/users', requireAdmin, async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const data = await db.getAllUsers(page);
+  const enriched = data.users.map(u => ({ ...u, level: db.levelForXp(u.xp || 0) }));
+  res.json({ users: enriched, total: data.total });
+});
+
+app.get('/api/admin/users/:id', requireAdmin, async (req, res) => {
+  const user = await db.getUserById(parseInt(req.params.id));
+  if (!user) return res.status(404).json({ error: '用户不存在' });
+  res.json({ user: { ...user, level: db.levelForXp(user.xp || 0) } });
+});
+
+app.put('/api/admin/users/:id/role', requireAdmin, async (req, res) => {
+  const { role } = req.body;
+  if (!['user', 'vip', 'svip', 'admin'].includes(role)) return res.status(400).json({ error: '无效角色' });
+  await db.updateUserRole(parseInt(req.params.id), role);
+  res.json({ ok: true });
+});
+
+app.put('/api/admin/users/:id/xp', requireAdmin, async (req, res) => {
+  const { xp } = req.body;
+  if (xp === undefined || xp < 0) return res.status(400).json({ error: '无效经验值' });
+  await db.updateUserXp(parseInt(req.params.id), xp);
+  res.json({ ok: true });
+});
+
 app.use((req, res, next) => {
   if (req.method === 'GET' && !req.path.startsWith('/api') && !req.path.startsWith('/socket.io')) {
     return res.sendFile(path.join(__dirname, 'public', 'app.html'));
@@ -184,6 +224,8 @@ io.on('connection', (socket) => {
   socket.on('private message', async ({ receiverId, content }) => {
     const msg = { senderId: userId, receiverId, content, createdAt: new Date().toISOString() };
     await db.saveMessage(userId, receiverId, content);
+    const xpResult = await db.addXp(userId, 10);
+    if (xpResult) msg.xpGained = xpResult.gained;
     io.to(`user:${receiverId}`).emit('private message', msg);
     socket.emit('private message', msg);
   });
