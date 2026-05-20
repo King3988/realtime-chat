@@ -846,9 +846,10 @@ const SUIT_SYM = {c:'♣',d:'♦',h:'♥',s:'♠'};
 
 function cardHtml(card, small) {
   if (!card) return '';
-  const r=card[0], s=card[1], red=(s==='d'||s==='h');
+  const rk=card[0], s=card[1], red=(s==='d'||s==='h');
+  const displayRank = rk==='T'?'10':rk;
   const cls=small?'pkr-card small':'pkr-card';
-  return `<div class="${cls} ${red?'red':''}"><span class="t">${r}</span><span class="s">${SUIT_SYM[s]}</span></div>`;
+  return `<div class="${cls} ${red?'red':''}"><span class="t">${displayRank}</span><span class="s">${SUIT_SYM[s]}</span></div>`;
 }
 function cardBack(small) {
   return `<div class="pkr-card back ${small?'small':''}"><span class="t">?</span><span class="s">?</span></div>`;
