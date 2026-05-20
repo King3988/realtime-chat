@@ -355,10 +355,12 @@ class PokerGame {
     const bbIdx = (this.dealerIdx+2)%active.length;
     this.postBlind(active[sbIdx], this.sb);
     this.postBlind(active[bbIdx], this.bb);
+    active[sbIdx].acted = true; // SB's blind counts as their preflop action
+    // BB stays acted=false so they get the option when action returns
     this.currentBet = this.bb;
     this.minRaise = this.bb;
 
-    // Action starts after BB
+    // Action starts to the left of BB (UTG)
     this.betStartIdx = (bbIdx+1)%active.length;
     this.turnIdx = this.betStartIdx;
     this.actionOn = active[this.turnIdx].id;
