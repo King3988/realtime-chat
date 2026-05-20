@@ -262,7 +262,7 @@ section:nth-child(even){background:rgba(255,255,255,.02)}
         <span>💣 <span id="mine-count">10</span></span>
         <span>⏱️ <span id="mine-timer">000</span></span>
       </div>
-      <button class="btn btn-primary" onclick="initMinesweeper()">🔄 重新开始</button>
+      <button id="mine-face" class="btn btn-primary" onclick="initMinesweeper()" style="font-size:1.4rem;padding:2px 16px">😊</button>
       <div id="mine-grid"></div>
       <div id="mine-message" style="font-size:.95rem;min-height:1.5em;color:#888"></div>
       <div class="mine-lb">
@@ -575,7 +575,11 @@ function initMinesweeper() {
   document.getElementById('mine-count').textContent = d.mines;
   document.getElementById('mine-timer').textContent = '000';
   document.getElementById('mine-message').textContent = '';
+  updateResetFace('😊');
   renderMineGrid();
+}
+function updateResetFace(emoji) {
+  document.getElementById('mine-face').textContent = emoji;
 }
 
 function renderMineGrid() {
@@ -637,6 +641,7 @@ function msReveal(r, c) {
       for (let cc = 0; cc < d.cols; cc++)
         if (msBoard[rr][cc] === -1) { msRevealed[rr][cc] = true; updateCell(rr, cc); }
     document.getElementById('mine-message').textContent = '💥 踩到地雷了！';
+    updateResetFace('😢');
     return;
   }
   reveal(r, c);
@@ -666,6 +671,7 @@ function checkWin() {
   if (revealed === total - d.mines) {
     msGameOver = true; clearInterval(msTimer);
     document.getElementById('mine-message').textContent = `🎉 你赢了！${msSeconds}秒`;
+    updateResetFace('😎');
     for (let r = 0; r < d.rows; r++)
       for (let c = 0; c < d.cols; c++)
         if (msBoard[r][c] === -1) { msFlagged[r][c] = true; updateCell(r, c); }
