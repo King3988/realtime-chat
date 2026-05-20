@@ -635,6 +635,28 @@ io.on('connection', (socket) => {
     if (game.checkRoundComplete()) {
       if (game.phase!=='showdown') game.advanceRound();
       broadcastGame(game);
+      if (game.phase==='showdown') {
+        // Sync chips back to DB
+        for (const pl of game.players) {
+          await db.updateUserCoins(pl.id, Math.min(1000, pl.chips));
+        }
+        // Remove players with 0 coins, notify them
+        const zeroPlayers = game.players.filter(pl => pl.chips <= 0);
+        for (const zp of zeroPlayers) {
+          io.to(`user:${zp.id}`).emit('poker kicked', '金币耗尽，已退出房间');
+          game.removePlayer(zp.id);
+        }
+        if (game.players.length >= 2) {
+          game.phase = 'waiting';
+          for (const pl of game.players) { pl.acted = false; pl.folded = false; pl.allIn = false; pl.betTotal = 0; pl.hole = []; }
+          game.community = []; game.pots = []; game.currentBet = 0;
+          broadcastGame(game);
+        } else {
+          // Not enough players
+          io.to('poker_' + game.roomId).emit('poker msg', '玩家不足，房间关闭');
+          pokerRooms.delete(game.roomId);
+        }
+      }
       if (cb) cb({ok:true});
       return;
     }
@@ -647,11 +669,13 @@ io.on('connection', (socket) => {
     if (cb) cb({ok:true});
   });
 
-  socket.on('disconnect', () => {
+  socket.on('disconnect', async () => {
     console.log(`${username} 断开: ${socket.id}`);
-    // Remove from poker room
+    // Remove from poker room & save chips
     const game = getRoomForUser(userId);
     if (game) {
+      const p = game.players.find(pl=>pl.id===userId);
+      if (p) await db.updateUserCoins(userId, Math.min(1000, p.chips));
       game.removePlayer(userId);
       if (game.players.length===0) pokerRooms.delete(game.roomId);
       else broadcastGame(game);

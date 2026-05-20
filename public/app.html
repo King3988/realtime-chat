@@ -503,6 +503,8 @@ function connectSocket() {
   socket.on('friend added', () => { loadFriends(); loadChatFriends(); });
   socket.on('banned', () => { alert('你已被封禁'); logout(); });
   socket.on('poker update', (data) => { pokerState = data; if (pokerRoom) pokerRender(); });
+  socket.on('poker kicked', (msg) => { alert(msg); pokerRoom=null; pokerState=null; document.getElementById('poker-table').style.display='none'; document.getElementById('poker-lobby').style.display=''; pokerRefreshList(); });
+  socket.on('poker msg', (msg) => { alert(msg); });
 }
 
 async function loadFriends() {
