@@ -94,6 +94,24 @@ section:nth-child(even){background:rgba(255,255,255,.02)}
 .msg-bubble.received .msg-time{color:#666}
 .msg-bubble .xp-tag{font-size:.65rem;color:var(--yellow);margin-left:6px}
 .chat-placeholder{flex:1;display:flex;align-items:center;justify-content:center;color:#555;font-size:.9rem}
+/* Game selection */
+.game-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;max-width:500px}
+.game-card{background:var(--bg-card);border-radius:12px;padding:24px 16px;text-align:center;cursor:pointer;transition:.3s;border:1px solid #333}
+.game-card:hover{transform:translateY(-4px);border-color:var(--accent);box-shadow:0 0 20px rgba(254,83,186,.15)}
+.game-card .icon{font-size:2.5rem;margin-bottom:8px}
+.game-card h3{font-size:1rem;margin-bottom:4px;color:#eee}
+.game-card p{color:#888;font-size:.8rem}
+/* Minesweeper sub-page */
+#mine-game{display:none;flex-direction:column;align-items:center;gap:12px}
+.mine-header{width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.mine-diff-bar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.mine-diff-bar .btn{padding:6px 14px;font-size:.82rem;border:1px solid #333;background:var(--bg-card);color:#aaa;border-radius:5rem}
+.mine-diff-bar .btn.active{border-color:var(--accent);color:#fff;background:rgba(254,83,186,.1)}
+.mine-diff-bar .btn:hover:not(.active){border-color:#666;color:#eee}
+.custom-diff-form{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;background:var(--bg-card);padding:10px 14px;border-radius:8px;border:1px solid #333}
+.custom-diff-form label{color:#aaa;font-size:.8rem;display:flex;align-items:center;gap:4px}
+.custom-diff-form input{width:56px;padding:5px;border:1px solid #333;border-radius:4px;background:var(--bg-secondary);color:#eee;text-align:center;font-size:.8rem;outline:none}
+.custom-diff-form input:focus{border-color:var(--accent)}
 /* Minesweeper */
 .mine-cell{width:36px;height:36px;border:1px solid #333;border-radius:4px;font-size:.85rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.1s;background:var(--bg-card);color:#eee}
 .mine-cell:hover{background:#333;border-color:var(--accent)}
@@ -107,6 +125,15 @@ section:nth-child(even){background:rgba(255,255,255,.02)}
 .mine-cell.n3{color:var(--accent)}
 .mine-cell.n4{color:var(--accent2)}
 .mine-cell.n5{color:var(--yellow)}
+/* Leaderboard */
+.mine-lb{width:100%;max-width:420px;background:var(--bg-secondary);border-radius:12px;padding:16px;border:1px solid #333;margin-top:16px}
+.mine-lb h3{text-align:center;margin-bottom:12px;font-size:1rem}
+.mine-lb table{width:100%;border-collapse:collapse;font-size:.82rem}
+.mine-lb th,.mine-lb td{padding:5px 8px;text-align:left;border-bottom:1px solid #333}
+.mine-lb th{color:#888;font-weight:600;font-size:.75rem}
+.mine-lb .r1{color:var(--yellow)}
+.mine-lb .r2{color:#c0c0c0}
+.mine-lb .r3{color:#cd7f32}
 /* Admin */
 #sec-admin .admin-table-wrap{overflow-x:auto;background:var(--bg-secondary);border-radius:12px;padding:16px;border:1px solid #333}
 #sec-admin table{width:100%;border-collapse:collapse;font-size:.85rem}
@@ -213,15 +240,35 @@ section:nth-child(even){background:rgba(255,255,255,.02)}
 
   <section id="sec-games">
     <h2 class="section-title">🎮 游戏</h2>
-    <p class="section-sub">经典扫雷，点击格子揭开，右键标记地雷</p>
-    <div style="display:flex;flex-direction:column;align-items:center">
-      <div id="mine-status" style="display:flex;gap:24px;margin-bottom:12px;font-size:.9rem;color:#888">
+    <p class="section-sub">选择一个游戏</p>
+    <!-- Game entry -->
+    <div id="game-selection" class="game-grid">
+      <div class="game-card" onclick="enterGame('minesweeper')"><div class="icon">💣</div><h3>扫雷</h3><p>经典扫雷</p></div>
+      <div class="game-card" style="opacity:.4;cursor:default"><div class="icon">🃏</div><h3>更多</h3><p>即将推出</p></div>
+    </div>
+    <!-- Minesweeper sub-page -->
+    <div id="mine-game">
+      <div class="mine-header">
+        <button class="btn btn-ghost btn-sm" onclick="exitGame()">← 返回</button>
+        <span style="color:#888;font-size:.85rem" id="mine-diff-label">简单 9×9</span>
+      </div>
+      <div class="mine-diff-bar">
+        <button class="btn active" data-diff="easy" onclick="setDifficulty('easy')">简单 9×9</button>
+        <button class="btn" data-diff="medium" onclick="setDifficulty('medium')">中等 16×16</button>
+        <button class="btn" data-diff="hard" onclick="setDifficulty('hard')">困难 30×16</button>
+        <button class="btn" data-diff="custom" onclick="showCustomDifficulty()">自定义</button>
+      </div>
+      <div style="display:flex;gap:24px;font-size:.9rem;color:#888">
         <span>💣 <span id="mine-count">10</span></span>
         <span>⏱️ <span id="mine-timer">000</span></span>
       </div>
-      <div id="mine-grid" style="display:inline-grid;grid-template-columns:repeat(9,36px);gap:2px"></div>
-      <button class="btn btn-ghost" style="margin-top:16px" onclick="initMinesweeper()">🔄 重新开始</button>
-      <div id="mine-message" style="margin-top:10px;font-size:.95rem;min-height:1.5em;color:#888"></div>
+      <button class="btn btn-primary" onclick="initMinesweeper()">🔄 重新开始</button>
+      <div id="mine-grid"></div>
+      <div id="mine-message" style="font-size:.95rem;min-height:1.5em;color:#888"></div>
+      <div class="mine-lb">
+        <h3>🏆 排行榜</h3>
+        <div id="lb-content"><div class="no-data" style="padding:20px;text-align:center;color:#555">暂无记录</div></div>
+      </div>
     </div>
   </section>
 
@@ -466,57 +513,107 @@ async function sendMessage() {
   socket.emit('private message', {receiverId:selectedChatFriend.id, content:text});
 }
 
+// Game navigation
+function enterGame(game) {
+  document.getElementById('game-selection').style.display = 'none';
+  if (game === 'minesweeper') {
+    document.getElementById('mine-game').style.display = 'flex';
+    setDifficulty('easy');
+  }
+}
+function exitGame() {
+  document.getElementById('game-selection').style.display = '';
+  document.getElementById('mine-game').style.display = 'none';
+  if (msTimer) { clearInterval(msTimer); msTimer = null; }
+}
+
 // Minesweeper
-const MS_ROWS = 9, MS_COLS = 9, MS_MINES = 10;
-let msBoard = [], msRevealed = [], msFlagged = [], msGameOver = false, msFirst = true, msTimer = null, msSeconds = 0;
+const DIFFICULTIES = {
+  easy: { rows:9, cols:9, mines:10, label:'简单 9×9' },
+  medium: { rows:16, cols:16, mines:40, label:'中等 16×16' },
+  hard: { rows:16, cols:30, mines:99, label:'困难 30×16' },
+};
+let currentDifficulty = 'easy', msBoard = [], msRevealed = [], msFlagged = [];
+let msGameOver = false, msFirst = true, msTimer = null, msSeconds = 0;
+
+function setDifficulty(key) {
+  currentDifficulty = key;
+  document.querySelectorAll('.mine-diff-bar .btn[data-diff]').forEach(b => b.classList.toggle('active', b.dataset.diff === key));
+  document.getElementById('mine-custom-form')?.remove();
+  document.getElementById('mine-diff-label').textContent = DIFFICULTIES[key].label;
+  initMinesweeper();
+  renderLeaderboard();
+}
+function showCustomDifficulty() {
+  const existing = document.getElementById('mine-custom-form');
+  if (existing) { existing.remove(); return; }
+  const form = document.createElement('div');
+  form.id = 'mine-custom-form'; form.className = 'custom-diff-form';
+  form.innerHTML = '<label>行 <input type="number" id="cd-rows" value="12" min="5" max="30"></label><label>列 <input type="number" id="cd-cols" value="12" min="5" max="30"></label><label>雷 <input type="number" id="cd-mines" value="20" min="1" max="200"></label><button class="btn btn-primary btn-sm" onclick="startCustom()">开始</button>';
+  document.querySelector('.mine-diff-bar').after(form);
+}
+function startCustom() {
+  const rows = Math.min(30, Math.max(5, parseInt(document.getElementById('cd-rows').value) || 12));
+  const cols = Math.min(30, Math.max(5, parseInt(document.getElementById('cd-cols').value) || 12));
+  const mines = Math.min(rows*cols-1, Math.max(1, parseInt(document.getElementById('cd-mines').value) || 20));
+  currentDifficulty = 'custom';
+  DIFFICULTIES.custom = { rows, cols, mines, label:`${rows}×${cols} ${mines}雷` };
+  document.querySelectorAll('.mine-diff-bar .btn[data-diff]').forEach(b => b.classList.remove('active'));
+  document.getElementById('mine-diff-label').textContent = DIFFICULTIES.custom.label;
+  document.getElementById('mine-custom-form')?.remove();
+  initMinesweeper();
+  renderLeaderboard();
+}
 
 function initMinesweeper() {
   if (msTimer) { clearInterval(msTimer); msTimer = null; }
-  msBoard = Array.from({length: MS_ROWS}, () => Array(MS_COLS).fill(0));
-  msRevealed = Array.from({length: MS_ROWS}, () => Array(MS_COLS).fill(false));
-  msFlagged = Array.from({length: MS_ROWS}, () => Array(MS_COLS).fill(false));
+  const d = DIFFICULTIES[currentDifficulty];
+  msBoard = Array.from({length: d.rows}, () => Array(d.cols).fill(0));
+  msRevealed = Array.from({length: d.rows}, () => Array(d.cols).fill(false));
+  msFlagged = Array.from({length: d.rows}, () => Array(d.cols).fill(false));
   msGameOver = false; msFirst = true; msSeconds = 0;
-  document.getElementById('mine-count').textContent = MS_MINES;
+  document.getElementById('mine-count').textContent = d.mines;
   document.getElementById('mine-timer').textContent = '000';
   document.getElementById('mine-message').textContent = '';
   renderMineGrid();
 }
 
-function placeMines(excludeR, excludeC) {
-  let placed = 0;
-  while (placed < MS_MINES) {
-    const r = Math.floor(Math.random() * MS_ROWS);
-    const c = Math.floor(Math.random() * MS_COLS);
-    if (msBoard[r][c] !== -1 && !(r === excludeR && c === excludeC)) {
-      msBoard[r][c] = -1; placed++;
-    }
-  }
-  for (let r = 0; r < MS_ROWS; r++)
-    for (let c = 0; c < MS_COLS; c++)
-      if (msBoard[r][c] !== -1)
-        msBoard[r][c] = [[-1,0],[0,-1],[0,1],[1,0],[-1,-1],[-1,1],[1,-1],[1,1]]
-          .reduce((n, d) => n + (msBoard[r+d[0]]?.[c+d[1]] === -1 ? 1 : 0), 0);
-}
-
 function renderMineGrid() {
+  const d = DIFFICULTIES[currentDifficulty];
   const grid = document.getElementById('mine-grid');
+  grid.style.display = 'inline-grid';
+  grid.style.gridTemplateColumns = `repeat(${d.cols},36px)`;
+  grid.style.gap = '2px';
   grid.innerHTML = '';
-  for (let r = 0; r < MS_ROWS; r++) {
-    for (let c = 0; c < MS_COLS; c++) {
+  for (let r = 0; r < d.rows; r++)
+    for (let c = 0; c < d.cols; c++) {
       const cell = document.createElement('button');
       cell.className = 'mine-cell';
-      cell.dataset.r = r; cell.dataset.c = c;
       cell.addEventListener('click', () => msReveal(r, c));
       cell.addEventListener('contextmenu', e => { e.preventDefault(); msFlag(r, c); });
       grid.appendChild(cell);
     }
+}
+
+function placeMines(excludeR, excludeC) {
+  const d = DIFFICULTIES[currentDifficulty];
+  let placed = 0;
+  while (placed < d.mines) {
+    const r = Math.floor(Math.random() * d.rows);
+    const c = Math.floor(Math.random() * d.cols);
+    if (msBoard[r][c] !== -1 && !(r === excludeR && c === excludeC)) { msBoard[r][c] = -1; placed++; }
   }
+  for (let r = 0; r < d.rows; r++)
+    for (let c = 0; c < d.cols; c++)
+      if (msBoard[r][c] !== -1)
+        msBoard[r][c] = [[-1,0],[0,-1],[0,1],[1,0],[-1,-1],[-1,1],[1,-1],[1,1]]
+          .reduce((n, dr) => n + (msBoard[r+dr[0]]?.[c+dr[1]] === -1 ? 1 : 0), 0);
 }
 
 function updateCell(r, c) {
+  const d = DIFFICULTIES[currentDifficulty];
   const cells = document.getElementById('mine-grid').children;
-  const idx = r * MS_COLS + c;
-  const cell = cells[idx];
+  const cell = cells[r * d.cols + c];
   if (msRevealed[r][c]) {
     cell.className = 'mine-cell revealed';
     if (msBoard[r][c] === -1) { cell.textContent = '💣'; cell.classList.add('mine'); }
@@ -529,14 +626,15 @@ function updateCell(r, c) {
 }
 
 function msReveal(r, c) {
+  const d = DIFFICULTIES[currentDifficulty];
   if (msGameOver || msRevealed[r][c] || msFlagged[r][c]) return;
   if (msFirst) { placeMines(r, c); msFirst = false; msTimer = setInterval(() => {
     msSeconds++; document.getElementById('mine-timer').textContent = String(msSeconds).padStart(3, '0');
   }, 1000); }
   if (msBoard[r][c] === -1) {
     msGameOver = true; clearInterval(msTimer);
-    for (let rr = 0; rr < MS_ROWS; rr++)
-      for (let cc = 0; cc < MS_COLS; cc++)
+    for (let rr = 0; rr < d.rows; rr++)
+      for (let cc = 0; cc < d.cols; cc++)
         if (msBoard[rr][cc] === -1) { msRevealed[rr][cc] = true; updateCell(rr, cc); }
     document.getElementById('mine-message').textContent = '💥 踩到地雷了！';
     return;
@@ -546,32 +644,61 @@ function msReveal(r, c) {
 }
 
 function reveal(r, c) {
-  if (r < 0 || r >= MS_ROWS || c < 0 || c >= MS_COLS || msRevealed[r][c] || msFlagged[r][c]) return;
+  const d = DIFFICULTIES[currentDifficulty];
+  if (r < 0 || r >= d.rows || c < 0 || c >= d.cols || msRevealed[r][c] || msFlagged[r][c]) return;
   msRevealed[r][c] = true; updateCell(r, c);
   if (msBoard[r][c] === 0)
-    [[-1,0],[0,-1],[0,1],[1,0],[-1,-1],[-1,1],[1,-1],[1,1]].forEach(d => reveal(r+d[0], c+d[1]));
+    [[-1,0],[0,-1],[0,1],[1,0],[-1,-1],[-1,1],[1,-1],[1,1]].forEach(dr => reveal(r+dr[0], c+dr[1]));
 }
 
 function msFlag(r, c) {
   if (msGameOver || msRevealed[r][c]) return;
   msFlagged[r][c] = !msFlagged[r][c]; updateCell(r, c);
-  const remaining = MS_MINES - Object.values(msFlagged).flat().filter(Boolean).length;
+  const d = DIFFICULTIES[currentDifficulty];
+  const remaining = d.mines - Object.values(msFlagged).flat().filter(Boolean).length;
   document.getElementById('mine-count').textContent = remaining;
 }
 
 function checkWin() {
-  const totalCells = MS_ROWS * MS_COLS;
+  const d = DIFFICULTIES[currentDifficulty];
+  const total = d.rows * d.cols;
   const revealed = msRevealed.flat().filter(Boolean).length;
-  if (revealed === totalCells - MS_MINES) {
+  if (revealed === total - d.mines) {
     msGameOver = true; clearInterval(msTimer);
-    document.getElementById('mine-message').textContent = '🎉 你赢了！';
-    for (let r = 0; r < MS_ROWS; r++)
-      for (let c = 0; c < MS_COLS; c++)
+    document.getElementById('mine-message').textContent = `🎉 你赢了！${msSeconds}秒`;
+    for (let r = 0; r < d.rows; r++)
+      for (let c = 0; c < d.cols; c++)
         if (msBoard[r][c] === -1) { msFlagged[r][c] = true; updateCell(r, c); }
+    saveLeaderboardEntry(currentDifficulty, msSeconds);
   }
 }
 
-initMinesweeper();
+// Leaderboard
+function getLeaderboard() {
+  try { return JSON.parse(localStorage.getItem('mine_leaderboard')) || { easy:[], medium:[], hard:[], custom:[] }; }
+  catch { return { easy:[], medium:[], hard:[], custom:[] }; }
+}
+function saveLeaderboardEntry(diff, time) {
+  if (!currentUser) return;
+  const lb = getLeaderboard();
+  const key = diff === 'custom' ? 'custom' : diff;
+  if (!lb[key]) lb[key] = [];
+  lb[key].push({ username: currentUser.username, uid:currentUser.uid, time, date: new Date().toISOString().slice(0,10) });
+  lb[key].sort((a,b) => a.time - b.time);
+  if (lb[key].length > 10) lb[key] = lb[key].slice(0, 10);
+  localStorage.setItem('mine_leaderboard', JSON.stringify(lb));
+  renderLeaderboard();
+}
+function renderLeaderboard() {
+  const lb = getLeaderboard();
+  const key = currentDifficulty === 'custom' ? 'custom' : currentDifficulty;
+  const entries = lb[key] || [];
+  const el = document.getElementById('lb-content');
+  if (!entries.length) { el.innerHTML = '<div class="no-data" style="padding:20px;text-align:center;color:#555">暂无记录</div>'; return; }
+  el.innerHTML = `<table><thead><tr><th>#</th><th>玩家</th><th>用时</th><th>日期</th></tr></thead><tbody>
+    ${entries.map((e,i) => `<tr><td class="r${i+1}">${i+1}</td><td>${escapeHtml(e.username)}</td><td>${e.time}s</td><td>${e.date}</td></tr>`).join('')}
+  </tbody></table>`;
+}
 
 // Admin
 async function loadAdmin() {
