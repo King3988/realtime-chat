@@ -249,6 +249,7 @@ app.put('/api/admin/users/:id/coins', requireAdmin, async (req, res) => {
 // === Poker Engine ===
 
 const Hand = require('pokersolver').Hand;
+const { ChineseChessGame } = require('./chess.js');
 const ACTION_TIMEOUT_MS = 30000;
 
 function createDeck() {
@@ -560,6 +561,18 @@ function getRoomForUser(userId) {
   return null;
 }
 
+// === Chess Room Manager ===
+const chessRooms = new Map();
+function generateChessCode() {
+  let code;
+  do { code = Math.floor(1000+Math.random()*9000).toString(); } while (chessRooms.has(code));
+  return code;
+}
+function getChessRoomForUser(userId) {
+  for (const [id, room] of chessRooms) if (room.players.find(p=>p.id===userId)||room.spectators.includes(userId)) return room;
+  return null;
+}
+
 app.use((req, res, next) => {
   if (req.method === 'GET' && !req.path.startsWith('/api') && !req.path.startsWith('/socket.io')) {
     return res.sendFile(path.join(__dirname, 'public', 'app.html'));
@@ -748,6 +761,88 @@ io.on('connection', (socket) => {
     if (cb) cb({ok:true});
   });
 
+  // === Chess Socket Events ===
+  function broadcastChess(game) {
+    for (const p of game.players) {
+      io.to(`user:${p.id}`).emit('chess update', game.getState(p.id));
+    }
+  }
+
+  socket.on('chess create', (cb) => {
+    if (getChessRoomForUser(userId)) return cb({error:'已在房间中'});
+    const code = generateChessCode();
+    const game = new ChineseChessGame(code, userId);
+    game.addPlayer({id:userId, username});
+    chessRooms.set(code, game);
+    socket.join('chess_'+code);
+    cb({roomId:code, game:game.getState(userId)});
+  });
+
+  socket.on('chess list', (cb) => {
+    const rooms = [];
+    for (const [id, g] of chessRooms) {
+      if (g.phase==='waiting') rooms.push({roomId:id, players:g.players.length, host:g.hostId===userId});
+    }
+    cb({rooms});
+  });
+
+  socket.on('chess join', ({roomId}, cb) => {
+    if (getChessRoomForUser(userId)) return cb({error:'已在房间中'});
+    const game = chessRooms.get(roomId);
+    if (!game) return cb({error:'房间不存在'});
+    if (game.phase!=='waiting') return cb({error:'游戏已开始'});
+    if (!game.addPlayer({id:userId, username})) return cb({error:'加入失败'});
+    socket.join('chess_'+roomId);
+    broadcastChess(game);
+    cb({roomId, game:game.getState(userId)});
+  });
+
+  socket.on('chess leave', (cb) => {
+    const game = getChessRoomForUser(userId);
+    if (!game) return;
+    game.removePlayer(userId);
+    socket.leave('chess_'+game.roomId);
+    if (game.players.length===0) chessRooms.delete(game.roomId);
+    else broadcastChess(game);
+    if (cb) cb({ok:true});
+  });
+
+  socket.on('chess start', (cb) => {
+    const game = getChessRoomForUser(userId);
+    if (!game) return cb({error:'不在房间中'});
+    if (game.hostId!==userId) return cb({error:'只有房主可以开始'});
+    if (!game.start()) return cb({error:'需要2名玩家'});
+    broadcastChess(game);
+    if (cb) cb({ok:true});
+  });
+
+  socket.on('chess select', ({r, c}, cb) => {
+    const game = getChessRoomForUser(userId);
+    if (!game || game.phase!=='playing') return;
+    const p = game.players.find(pl => pl.id === userId);
+    if (!p || game.turn !== p.color) return;
+    game.selectPiece(r, c);
+    io.to(`user:${userId}`).emit('chess update', game.getState(userId));
+    if (cb) cb({ok:true});
+  });
+
+  socket.on('chess move', ({fromR, fromC, toR, toC}, cb) => {
+    const game = getChessRoomForUser(userId);
+    if (!game) return cb({error:'不在房间中'});
+    const err = game.makeMove(fromR, fromC, toR, toC);
+    if (err) return cb({error:err});
+    broadcastChess(game);
+    if (cb) cb({ok:true});
+  });
+
+  socket.on('chess resign', (cb) => {
+    const game = getChessRoomForUser(userId);
+    if (!game) return;
+    game.resign(userId);
+    broadcastChess(game);
+    if (cb) cb({ok:true});
+  });
+
   socket.on('disconnect', async () => {
     console.log(`${username} 断开: ${socket.id}`);
     const game = getRoomForUser(userId);
@@ -760,6 +855,14 @@ io.on('connection', (socket) => {
       game.removePlayer(userId);
       if (game.players.length===0) { game.clearTimer(); pokerRooms.delete(game.roomId); }
       else broadcastGame(game);
+    }
+    // Chess room cleanup
+    const chessGame = getChessRoomForUser(userId);
+    if (chessGame) {
+      chessGame.removePlayer(userId);
+      socket.leave('chess_'+chessGame.roomId);
+      if (chessGame.players.length===0) chessRooms.delete(chessGame.roomId);
+      else broadcastChess(chessGame);
     }
     if (isGuest && guestSockets[userId]) {
       guestSockets[userId].delete(socket.id);

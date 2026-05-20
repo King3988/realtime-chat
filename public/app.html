@@ -202,6 +202,41 @@ section:nth-child(even){background:rgba(255,255,255,.02)}
 .modal .modal-error{background:#3d1a1a;color:#ff6b6b;padding:6px 10px;border-radius:6px;margin-bottom:12px;font-size:.8rem;display:none}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 @keyframes gradient_301{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+/* Chinese Chess */
+#chess-game{display:none;flex-direction:column;align-items:center;gap:10px;width:100%}
+.chess-board{display:grid;grid-template-columns:repeat(9,44px);grid-template-rows:repeat(10,44px);background:#d4a454;padding:4px;border-radius:6px;border:3px solid #8b6914;gap:0}
+.chess-cell{width:44px;height:44px;display:flex;align-items:center;justify-content:center;position:relative;color:#8b6914;user-select:none;border-right:1px solid #8b6914;border-bottom:1px solid #8b6914}
+.chess-cell.c0{border-left:1px solid #8b6914}
+.chess-cell.r0{border-top:1px solid #8b6914}
+.chess-cell.r4,.chess-cell.r5{border-bottom-color:transparent}
+.chess-pc{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;cursor:pointer;z-index:2;position:relative;border:2px solid #5a3e0a;box-shadow:1px 1px 3px rgba(0,0,0,.3);transition:.15s}
+.chess-pc.red{background:linear-gradient(135deg,#fdd,#fbb);color:#c00;border-color:#c00}
+.chess-pc.black{background:linear-gradient(135deg,#ddd,#bbb);color:#111;border-color:#333}
+.chess-pc.selected{box-shadow:0 0 0 3px #ffeb3b,0 0 12px #ffeb3b}
+.chess-pc.legal{box-shadow:0 0 0 3px rgba(76,175,80,.8);cursor:pointer}
+.chess-pc.legal:hover{background:rgba(76,175,80,.3)}
+.chess-info{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center;font-size:.85rem;color:#888}
+.chess-ctrl{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+@media(max-width:480px){.chess-board{grid-template-columns:repeat(9,34px);grid-template-rows:repeat(10,34px)}.chess-pc{width:28px;height:28px;font-size:.9rem}.chess-cell{width:34px;height:34px}}
+/* Chinese Chess */
+#chess-game{display:none;flex-direction:column;align-items:center;gap:10px;width:100%}
+.chess-board{display:grid;grid-template-columns:repeat(9,44px);grid-template-rows:repeat(10,44px);gap:0;background:#d4a454;padding:4px;border-radius:6px;border:3px solid #8b6914;position:relative}
+.chess-cell{width:44px;height:44px;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;font-size:.75rem;color:#8b6914;user-select:none}
+.chess-cell::before{content:'';position:absolute;width:100%;height:100%;pointer-events:none}
+.chess-cell .h-line{position:absolute;top:50%;left:0;right:0;height:1px;background:#8b6914;transform:translateY(-50%)}
+.chess-cell .v-line{position:absolute;left:50%;top:0;bottom:0;width:1px;background:#8b6914;transform:translateX(-50%)}
+.chess-board .river{position:absolute;top:calc(44px*4+2px);left:0;right:0;height:44px;display:flex;align-items:center;justify-content:center;color:#8b6914;font-size:.85rem;letter-spacing:8px;pointer-events:none;z-index:1;font-style:italic}
+.chess-pc{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;cursor:pointer;z-index:2;position:relative;border:2px solid #5a3e0a;box-shadow:1px 1px 3px rgba(0,0,0,.3)}
+.chess-pc.red{background:linear-gradient(135deg,#fdd,#fbb);color:#c00;border-color:#c00}
+.chess-pc.black{background:linear-gradient(135deg,#ddd,#bbb);color:#111;border-color:#333}
+.chess-pc.selected{box-shadow:0 0 0 3px #ffeb3b,0 0 12px #ffeb3b}
+.chess-pc.legal{box-shadow:0 0 0 3px rgba(76,175,80,.8);cursor:pointer;animation:pulse 1s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 3px rgba(76,175,80,.8)}50%{box-shadow:0 0 0 6px rgba(76,175,80,.4)}100%{box-shadow:0 0 0 3px rgba(76,175,80,.8)}}
+.chess-pc.last-move{opacity:.7}
+#chess-info{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center;font-size:.85rem;color:#888}
+#chess-controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.chess-cell.marked::after{content:'';position:absolute;width:12px;height:12px;border-radius:50%;background:rgba(76,175,80,.4);pointer-events:none;z-index:1}
+@media(max-width:480px){.chess-board{grid-template-columns:repeat(9,34px);grid-template-rows:repeat(10,34px)}.chess-pc{width:28px;height:28px;font-size:.9rem}.chess-cell{width:34px;height:34px}}
 </style>
 </head>
 <body>
@@ -214,31 +249,30 @@ section:nth-child(even){background:rgba(255,255,255,.02)}
     <div class="nav-item" data-target="chat">💬 消息</div>
     <div class="nav-item" data-target="games">🎮 游戏</div>
     <div class="nav-item hidden" data-target="admin" id="nav-admin">🔧 管理</div>
-  </div>
-</div>
-
-<div id="main">
-  <div id="topbar">
-    <div id="user-info"></div>
-  </div>
-
-  <section id="sec-home">
-    <div id="home-guest">
-      <h1>欢迎来到 MyCommunity</h1>
-      <p>结交好友，实时聊天，升级成长。</p>
-      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-        <button class="btn btn-primary" onclick="showModal('login')">登录</button>
-        <button class="btn btn-ghost" onclick="showModal('register')">注册</button>
-        <button class="btn btn-ghost" onclick="guestLogin()">游客体验</button>
-      </div>
     </div>
-    <div id="home-user" style="display:none">
-      <h1>欢迎回来</h1>
-      <p id="home-user-info"></p>
-      <div class="features">
-        <div class="feature-card"><div class="icon">👥</div><h3>好友</h3><p>搜索添加好友</p></div>
-        <div class="feature-card"><div class="icon">💬</div><h3>消息</h3><p>实时私聊</p></div>
-        <div class="feature-card"><div class="icon">🎮</div><h3>游戏</h3><p>休闲小游戏</p></div>
+    </div>
+    <!-- Chinese Chess sub-page -->
+    <div id="chess-game">
+      <div class="mine-header">
+        <button class="btn btn-ghost btn-sm" onclick="exitGame()">← 返回</button>
+        <span style="color:#888;font-size:.85rem" id="chess-title">中国象棋</span>
+      </div>
+      <!-- Lobby -->
+      <div id="chess-lobby" style="width:100%;max-width:500px">
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <button class="btn btn-primary btn-sm" onclick="chessCreate()">创建房间</button>
+        </div>
+        <div id="chess-room-list"><div class="no-data" style="text-align:center;color:#555;padding:20px">暂无房间，点击上方创建</div></div>
+      </div>
+      <!-- Table -->
+      <div id="chess-table" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%">
+        <div class="chess-info">
+          <span id="chess-turn"></span>
+          <span id="chess-result" style="color:#ffdb3b"></span>
+        </div>
+        <div class="chess-board" id="chess-board"></div>
+        <div class="chess-ctrl" id="chess-ctrl"></div>
+        <div class="chess-info" id="chess-players"></div>
       </div>
     </div>
   </section>
@@ -289,6 +323,7 @@ section:nth-child(even){background:rgba(255,255,255,.02)}
     <div id="game-selection" class="game-grid">
       <div class="game-card" onclick="enterGame('minesweeper')"><div class="icon">💣</div><h3>扫雷</h3><p>经典扫雷</p></div>
       <div class="game-card" onclick="enterGame('poker')"><div class="icon">🃏</div><h3>德州扑克</h3><p>在线对战</p></div>
+      <div class="game-card" onclick="enterGame('chess')"><div class="icon">♟️</div><h3>中国象棋</h3><p>两人对弈</p></div>
     </div>
     <!-- Minesweeper sub-page -->
     <div id="mine-game">
@@ -1007,6 +1042,11 @@ function enterGame(game) {
   } else if (game==='minesweeper') {
     document.getElementById('mine-game').style.display = 'flex';
     setDifficulty('easy');
+  } else if (game==='chess') {
+    document.getElementById('chess-game').style.display = 'flex';
+    document.getElementById('chess-table').style.display = 'none';
+    document.getElementById('chess-lobby').style.display = '';
+    chessRefreshList();
   }
 }
 
@@ -1014,8 +1054,145 @@ function exitGame() {
   document.getElementById('game-selection').style.display = '';
   document.getElementById('mine-game').style.display = 'none';
   document.getElementById('poker-game').style.display = 'none';
+  document.getElementById('chess-game').style.display = 'none';
   if (pokerRoom) { socket.emit('poker leave'); pokerRoom=null; pokerState=null; }
+  if (chessRoom) { socket.emit('chess leave'); chessRoom=null; chessState=null; }
   if (msTimer) { clearInterval(msTimer); msTimer = null; }
+}
+
+// === Chinese Chess ===
+let chessRoom = null, chessState = null;
+const PIECE_NAMES = {K:'帅',A:'仕',B:'相',N:'马',R:'车',C:'炮',P:'兵',k:'将',a:'士',b:'象',n:'馬',r:'車',c:'砲',p:'卒'};
+
+socket.on('chess update', (s) => { chessState = s; chessRender(); });
+
+function chessRefreshList() {
+  socket.emit('chess list', (res) => {
+    const list = document.getElementById('chess-room-list');
+    if (!res.rooms.length) { list.innerHTML = '<div class="no-data" style="text-align:center;color:#555;padding:20px">暂无房间</div>'; return; }
+    list.innerHTML = res.rooms.map(r => `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg-card);border-radius:8px;margin-bottom:6px">
+      <span style="color:#888;font-size:.82rem">房间 ${r.roomId} (${r.players}/2)</span>
+      <button class="btn btn-primary btn-sm" onclick="chessJoin('${r.roomId}')">加入</button>
+    </div>`).join('');
+  });
+}
+function chessCreate() {
+  socket.emit('chess create', (res) => { if(res.error) return alert(res.error); chessRoom=res.roomId; chessState=res.game; chessEnterTable(); });
+}
+function chessJoin(roomId) {
+  socket.emit('chess join', {roomId}, (res) => { if(res.error) return alert(res.error); chessRoom=res.roomId; chessState=res.game; chessEnterTable(); });
+}
+function chessLeave() {
+  socket.emit('chess leave');
+  chessRoom = null; chessState = null;
+  document.getElementById('chess-table').style.display = 'none';
+  document.getElementById('chess-lobby').style.display = '';
+  chessRefreshList();
+}
+function chessStart() {
+  socket.emit('chess start', (res) => { if(res&&res.error) alert(res.error); });
+}
+function chessEnterTable() {
+  document.getElementById('chess-lobby').style.display = 'none';
+  document.getElementById('chess-table').style.display = 'flex';
+  chessRender();
+}
+
+function chessRender() {
+  const s = chessState;
+  if (!s) return;
+  document.getElementById('chess-title').textContent = `中国象棋 · 房间 ${s.roomId}`;
+  // Players
+  const me = s.players.find(p => p.id === (currentUser?currentUser.id:null));
+  document.getElementById('chess-players').innerHTML = s.players.map(p =>
+    `<span style="color:${p.color==='red'?'#c00':'#111'}">${p.color==='red'?'🔴':'⚫'} ${escapeHtml(p.username)}</span>`
+  ).join('');
+  // Turn
+  const turnEl = document.getElementById('chess-turn');
+  if (s.phase==='playing') {
+    turnEl.textContent = s.turn==='red' ? '红方走棋' : '黑方走棋';
+    turnEl.style.color = s.turn==='red' ? '#c00' : '#111';
+  } else if (s.phase==='red_wins') { turnEl.textContent = '红方胜！'; turnEl.style.color='#c00'; }
+  else if (s.phase==='black_wins') { turnEl.textContent = '黑方胜！'; turnEl.style.color='#111'; }
+  else { turnEl.textContent = ''; }
+  // Controls
+  const ctrl = document.getElementById('chess-ctrl');
+  if (s.phase==='waiting') {
+    const isHost = s.hostId===(currentUser?currentUser.id:null);
+    ctrl.style.display='flex';
+    ctrl.innerHTML=`<button class="pkr-btn danger" onclick="chessLeave()">离开房间</button>${isHost&&s.players.length===2?'<button class="pkr-btn primary" onclick="chessStart()">开始对弈</button>':''}`;
+  } else if (s.phase==='playing') {
+    ctrl.style.display='flex';
+    ctrl.innerHTML=`<button class="pkr-btn danger" onclick="chessResign()">认输</button><button class="pkr-btn" onclick="chessLeave()">离开</button>`;
+  } else {
+    ctrl.style.display='flex';
+    ctrl.innerHTML=`<button class="pkr-btn" onclick="chessLeave()">离开房间</button>`;
+  }
+  // Board
+  const board = document.getElementById('chess-board');
+  board.innerHTML = '';
+  for (let r=0;r<10;r++) for (let c=0;c<9;c++) {
+    const cell = document.createElement('div');
+    cell.className = ['chess-cell', `r${r}`, `c${c}`].join(' ');
+    cell.dataset.r = r; cell.dataset.c = c;
+    const pc = s.board[r][c];
+    const isLegal = s.legalMoves.some(([lr,lc]) => lr===r && lc===c);
+    if (pc) {
+      const col = pc===pc.toUpperCase()?'red':'black';
+      const el = document.createElement('div');
+      el.className = ['chess-pc', col, s.selected&&s.selected[0]===r&&s.selected[1]===c?'selected':'', isLegal?'legal':''].filter(Boolean).join(' ');
+      el.textContent = PIECE_NAMES[pc]||pc;
+      el.onclick = (ev) => { ev.stopPropagation(); chessPieceClick(r,c); };
+      cell.appendChild(el);
+    } else if (isLegal) {
+      const dot = document.createElement('div');
+      dot.style.cssText = 'width:12px;height:12px;border-radius:50%;background:rgba(76,175,80,.5);z-index:2;cursor:pointer';
+      dot.onclick = () => chessMoveClick(r,c);
+      cell.appendChild(dot);
+    }
+    cell.onclick = () => chessCellClick(r,c);
+    board.appendChild(cell);
+  }
+}
+
+function chessPieceClick(r, c) {
+  const s = chessState;
+  if (!s || s.phase!=='playing') return;
+  const me = s.players.find(p => p.id === (currentUser?currentUser.id:null));
+  if (!me || s.turn !== me.color) return;
+  socket.emit('chess select', {r,c});
+}
+
+function chessMoveClick(r, c) {
+  const s = chessState;
+  if (!s || !s.selected) return;
+  // If clicking a legal move square, make the move
+  if (s.legalMoves.some(([lr,lc]) => lr===r && lc===c)) {
+    socket.emit('chess move', {fromR:s.selected[0], fromC:s.selected[1], toR:r, toC:c}, (res) => {
+      if (res&&res.error) alert(res.error);
+    });
+  }
+}
+
+function chessCellClick(r, c) {
+  const s = chessState;
+  if (!s || !s.selected) return;
+  const pc = s.board[r][c];
+  if (pc) {
+    const col = pc===pc.toUpperCase()?'red':'black';
+    const me = s.players.find(p => p.id === (currentUser?currentUser.id:null));
+    if (me && col === me.color) {
+      // Select own piece
+      socket.emit('chess select', {r,c});
+      return;
+    }
+  }
+  chessMoveClick(r, c);
+}
+
+function chessResign() {
+  if (!confirm('确认认输？')) return;
+  socket.emit('chess resign');
 }
 
 function escapeHtml(str) { const d=document.createElement('div'); d.textContent=str; return d.innerHTML; }
