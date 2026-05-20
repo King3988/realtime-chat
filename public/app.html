@@ -5,119 +5,132 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>MyCommunity</title>
 <style>
+:root {
+  --bg-primary: #121212;
+  --bg-secondary: #1e1e1e;
+  --bg-card: #212121;
+  --text-primary: #eee;
+  --text-secondary: #888;
+  --accent: #fe53bb;
+  --accent2: #8f51ea;
+  --yellow: #ffdb3b;
+  --blue: #0044ff;
+}
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{font:14px/1.5 system-ui,sans-serif;background:#1a1a2e;color:#eee;display:flex}
-#sidebar{position:fixed;left:0;top:0;bottom:0;width:200px;background:#0f3460;display:flex;flex-direction:column;z-index:50}
-#logo{padding:20px 16px;font-size:1.2rem;font-weight:700;color:#e94560;border-bottom:1px solid #1a1a40}
+body{font:14px/1.5 system-ui,sans-serif;background:var(--bg-primary);color:var(--text-primary);display:flex}
+#sidebar{position:fixed;left:0;top:0;bottom:0;width:200px;background:var(--bg-secondary);display:flex;flex-direction:column;z-index:50;border-right:1px solid #333}
+#logo{padding:20px 16px;font-size:1.2rem;font-weight:700;border-bottom:1px solid #333;background:linear-gradient(137.48deg,#ffdb3b 10%,#fe53bb 45%,#8f51ea 67%,#0044ff 87%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 #nav{flex:1;padding:8px 0;overflow-y:auto}
 .nav-item{padding:12px 20px;cursor:pointer;display:flex;align-items:center;gap:10px;color:#aaa;transition:.2s;border-left:3px solid transparent}
-.nav-item:hover{background:#1a1a40;color:#eee}
-.nav-item.active{background:#1a1a40;color:#e94560;border-left-color:#e94560}
-.nav-item .badge{background:#e94560;color:#fff;font-size:.7rem;padding:1px 7px;border-radius:10px;margin-left:auto}
+.nav-item:hover{background:rgba(255,255,255,.05);color:#eee}
+.nav-item.active{background:rgba(254,83,186,.1);color:var(--accent);border-left-color:var(--accent)}
+.nav-item .badge{background:var(--accent);color:#fff;font-size:.7rem;padding:1px 7px;border-radius:10px;margin-left:auto}
 .nav-item.hidden{display:none}
 #main{margin-left:200px;flex:1;min-height:100vh;display:flex;flex-direction:column}
-#topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:flex-end;padding:12px 32px;background:#16213ee0;backdrop-filter:blur(8px);border-bottom:1px solid #1a1a40;gap:12px}
+#topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:flex-end;padding:12px 32px;background:rgba(18,18,18,.88);backdrop-filter:blur(8px);border-bottom:1px solid #333;gap:12px}
 #user-info{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 #user-info .uid{color:#555;font-size:.78rem}
 .role-badge{font-size:.7rem;padding:1px 8px;border-radius:10px;font-weight:600}
 .role-user{background:#333;color:#aaa}
 .role-vip{background:#b8860b;color:#fff}
-.role-svip{background:#e94560;color:#fff}
-.role-admin{background:#4a0080;color:#fff}
+.role-svip{background:var(--accent);color:#fff}
+.role-admin{background:var(--accent2);color:#fff}
 .xp-text{color:#888;font-size:.78rem}
-.btn{padding:6px 16px;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;transition:.2s;display:inline-flex;align-items:center;gap:4px}
-.btn-primary{background:#e94560;color:#fff}
-.btn-primary:hover{background:#c73650}
-.btn-ghost{background:transparent;color:#e94560;border:1px solid #e94560}
-.btn-ghost:hover{background:#e94560;color:#fff}
+.btn{padding:6px 16px;border:none;cursor:pointer;font-size:.85rem;transition:.2s;display:inline-flex;align-items:center;gap:4px;font-family:inherit;border-radius:5rem}
+.btn-primary{position:relative;overflow:hidden;background-size:300% 300%;animation:gradient_301 5s ease infinite;border:double 2px transparent;background-image:linear-gradient(var(--bg-card),var(--bg-card)),linear-gradient(137.48deg,#ffdb3b 10%,#fe53bb 45%,#8f51ea 67%,#0044ff 87%);background-origin:border-box;background-clip:content-box,border-box;color:#fff}
+.btn-primary:hover{transform:scale(1.05)}
+.btn-ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+.btn-ghost:hover{background:var(--accent);color:#fff}
 .btn-sm{font-size:.8rem;padding:4px 10px}
 .btn-danger{background:#c0392b;color:#fff}
 .btn-danger:hover{background:#a93226}
 section{padding:48px 48px 80px;min-height:100vh}
-section:nth-child(even){background:#15152a}
-.section-title{font-size:1.6rem;color:#e94560;margin-bottom:8px}
+section:nth-child(even){background:rgba(255,255,255,.02)}
+.section-title{font-size:1.6rem;margin-bottom:8px;background:linear-gradient(137.48deg,#ffdb3b 10%,#fe53bb 45%,#8f51ea 67%,#0044ff 87%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .section-sub{color:#666;margin-bottom:32px;font-size:.95rem}
 #sec-home{display:flex;flex-direction:column;justify-content:center;text-align:center;min-height:100vh}
-#sec-home h1{font-size:2.8rem;color:#e94560;margin-bottom:12px}
+#sec-home h1{font-size:2.8rem;margin-bottom:12px;background:linear-gradient(137.48deg,#ffdb3b 10%,#fe53bb 45%,#8f51ea 67%,#0044ff 87%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 #sec-home p{color:#888;max-width:520px;margin:0 auto 32px;font-size:1.05rem}
 .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;max-width:640px;margin:0 auto}
-.feature-card{background:#0f3460;border-radius:12px;padding:24px 16px;text-align:center;transition:.3s}
-.feature-card:hover{transform:translateY(-4px);background:#1a1a50}
+.feature-card{background:var(--bg-card);border-radius:12px;padding:24px 16px;text-align:center;transition:.3s;border:1px solid #333}
+.feature-card:hover{transform:translateY(-4px);border-color:var(--accent);box-shadow:0 0 20px rgba(254,83,186,.15)}
 .feature-card .icon{font-size:2.2rem;margin-bottom:8px}
-.feature-card h3{font-size:1rem;margin-bottom:4px}
+.feature-card h3{font-size:1rem;margin-bottom:4px;color:#eee}
 .feature-card p{color:#888;font-size:.82rem}
 #home-user-info{color:#888;margin-bottom:24px}
 #sec-friends .friends-layout{display:flex;gap:24px;height:520px}
-.friends-sidebar{width:300px;flex-shrink:0;background:#16213e;border-radius:12px;padding:16px;display:flex;flex-direction:column}
-.friends-sidebar .tabs{display:flex;gap:4px;margin-bottom:12px;background:#0f3460;border-radius:8px;padding:3px}
+.friends-sidebar{width:300px;flex-shrink:0;background:var(--bg-secondary);border-radius:12px;padding:16px;display:flex;flex-direction:column;border:1px solid #333}
+.friends-sidebar .tabs{display:flex;gap:4px;margin-bottom:12px;background:var(--bg-card);border-radius:8px;padding:3px}
 .friends-sidebar .tabs .tab{flex:1;text-align:center;padding:7px;border-radius:6px;cursor:pointer;font-size:.82rem;color:#888;transition:.2s}
-.friends-sidebar .tabs .tab.active{background:#e94560;color:#fff}
+.friends-sidebar .tabs .tab.active{background:linear-gradient(137.48deg,#ffdb3b 10%,#fe53bb 45%,#8f51ea 67%,#0044ff 87%);color:#fff}
 .friends-sidebar .tabs .tab:hover:not(.active){color:#eee}
 .friends-sidebar .tab-content{flex:1;overflow-y:auto}
 .tab-content .no-data{text-align:center;color:#555;padding:40px 0;font-size:.85rem}
 .friend-item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:6px;transition:.2s;margin-bottom:2px}
-.friend-item:hover{background:#0f3460}
+.friend-item:hover{background:var(--bg-card)}
 .friend-item .name{font-size:.9rem}
 .friend-item .uid-text{color:#555;font-size:.75rem;margin-left:6px}
-.search-area input{width:100%;padding:8px 12px;border:none;border-radius:6px;background:#0f3460;color:#eee;font-size:.85rem;outline:none;margin-bottom:8px}
+.search-area input{width:100%;padding:8px 12px;border:none;border-radius:6px;background:var(--bg-card);color:#eee;font-size:.85rem;outline:none;margin-bottom:8px}
 .search-area input::placeholder{color:#555}
-.search-result{padding:8px 10px;background:#0f3460;border-radius:6px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between}
+.search-result{padding:8px 10px;background:var(--bg-card);border-radius:6px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between}
 #sec-chat .chat-layout{display:flex;gap:24px;height:520px}
-.chat-friends{width:220px;flex-shrink:0;background:#16213e;border-radius:12px;padding:12px;overflow-y:auto}
+.chat-friends{width:220px;flex-shrink:0;background:var(--bg-secondary);border-radius:12px;padding:12px;overflow-y:auto;border:1px solid #333}
 .chat-friends .cf-item{padding:10px 12px;border-radius:6px;cursor:pointer;transition:.2s;margin-bottom:2px}
-.chat-friends .cf-item:hover{background:#0f3460}
-.chat-friends .cf-item.active{background:#0f3460;border-left:3px solid #e94560}
+.chat-friends .cf-item:hover{background:var(--bg-card)}
+.chat-friends .cf-item.active{background:rgba(254,83,186,.1);border-left:3px solid var(--accent)}
 .chat-friends .cf-item .cf-name{font-size:.9rem}
 .chat-friends .cf-item .cf-uid{color:#555;font-size:.75rem}
-.chat-area{flex:1;background:#16213e;border-radius:12px;display:flex;flex-direction:column;min-width:0}
-.chat-header{padding:14px 20px;border-bottom:1px solid #1a1a40;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.chat-area{flex:1;background:var(--bg-secondary);border-radius:12px;display:flex;flex-direction:column;min-width:0;border:1px solid #333}
+.chat-header{padding:14px 20px;border-bottom:1px solid #333;font-weight:600;display:flex;justify-content:space-between;align-items:center}
 .chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:6px}
-.chat-input-area{display:flex;gap:8px;padding:12px 16px;border-top:1px solid #1a1a40}
-.chat-input-area input{flex:1;padding:10px 14px;border:none;border-radius:8px;background:#0f3460;color:#eee;font-size:.9rem;outline:none}
+.chat-input-area{display:flex;gap:8px;padding:12px 16px;border-top:1px solid #333}
+.chat-input-area input{flex:1;padding:10px 14px;border:none;border-radius:8px;background:var(--bg-card);color:#eee;font-size:.9rem;outline:none}
 .chat-input-area input::placeholder{color:#555}
 .msg-bubble{max-width:70%;padding:8px 14px;border-radius:12px;font-size:.9rem;word-break:break-word;animation:fadeIn .15s}
-.msg-bubble.sent{background:#e94560;align-self:flex-end;border-bottom-right-radius:4px}
-.msg-bubble.received{background:#0f3460;align-self:flex-start;border-bottom-left-radius:4px}
+.msg-bubble.sent{background:linear-gradient(135deg,#fe53bb,#8f51ea);align-self:flex-end;border-bottom-right-radius:4px}
+.msg-bubble.received{background:var(--bg-card);align-self:flex-start;border-bottom-left-radius:4px;border:1px solid #333}
 .msg-bubble .msg-time{font-size:.65rem;color:rgba(255,255,255,.5);margin-top:3px;text-align:right}
 .msg-bubble.received .msg-time{color:#666}
-.msg-bubble .xp-tag{font-size:.65rem;color:#f1c40f;margin-left:6px}
+.msg-bubble .xp-tag{font-size:.65rem;color:var(--yellow);margin-left:6px}
 .chat-placeholder{flex:1;display:flex;align-items:center;justify-content:center;color:#555;font-size:.9rem}
 /* Minesweeper */
-.mine-cell{width:36px;height:36px;border:none;border-radius:4px;font-size:.85rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.1s;background:#0f3460;color:#eee}
-.mine-cell:hover{background:#1a1a50}
-.mine-cell.revealed{background:#16213e;cursor:default}
-.mine-cell.revealed:hover{background:#16213e}
-.mine-cell.flag{background:#3d2a1a;color:#e94560}
+.mine-cell{width:36px;height:36px;border:1px solid #333;border-radius:4px;font-size:.85rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.1s;background:var(--bg-card);color:#eee}
+.mine-cell:hover{background:#333;border-color:var(--accent)}
+.mine-cell.revealed{background:var(--bg-secondary);cursor:default}
+.mine-cell.revealed:hover{background:var(--bg-secondary);border-color:#333}
+.mine-cell.flag{background:#3d2a1a;color:var(--accent)}
 .mine-cell.mine{background:#c0392b;color:#fff}
 .mine-cell.n0{color:#555}
 .mine-cell.n1{color:#4fc3f7}
 .mine-cell.n2{color:#81c784}
-.mine-cell.n3{color:#e94560}
-.mine-cell.n4{color:#9c27b0}
-.mine-cell.n5{color:#ff7043}
+.mine-cell.n3{color:var(--accent)}
+.mine-cell.n4{color:var(--accent2)}
+.mine-cell.n5{color:var(--yellow)}
 /* Admin */
-#sec-admin .admin-table-wrap{overflow-x:auto;background:#16213e;border-radius:12px;padding:16px}
+#sec-admin .admin-table-wrap{overflow-x:auto;background:var(--bg-secondary);border-radius:12px;padding:16px;border:1px solid #333}
 #sec-admin table{width:100%;border-collapse:collapse;font-size:.85rem}
-#sec-admin th,#sec-admin td{padding:10px 12px;text-align:left;border-bottom:1px solid #1a1a40}
+#sec-admin th,#sec-admin td{padding:10px 12px;text-align:left;border-bottom:1px solid #333}
 #sec-admin th{color:#888;font-weight:600;font-size:.8rem}
-#sec-admin tr:hover td{background:#0f3460}
-#sec-admin select{padding:4px 6px;border:none;border-radius:4px;background:#0f3460;color:#eee;font-size:.8rem;outline:none;cursor:pointer}
-#sec-admin .xp-input{width:70px;padding:4px 6px;border:none;border-radius:4px;background:#0f3460;color:#eee;font-size:.8rem;text-align:center;outline:none}
-#sec-admin .xp-input:focus{border:1px solid #e94560}
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);align-items:center;justify-content:center;z-index:200}
+#sec-admin tr:hover td{background:var(--bg-card)}
+#sec-admin select{padding:4px 6px;border:1px solid #333;border-radius:4px;background:var(--bg-card);color:#eee;font-size:.8rem;outline:none;cursor:pointer}
+#sec-admin .xp-input{width:70px;padding:4px 6px;border:1px solid #333;border-radius:4px;background:var(--bg-card);color:#eee;font-size:.8rem;text-align:center;outline:none}
+#sec-admin .xp-input:focus{border-color:var(--accent);box-shadow:0 0 8px rgba(254,83,186,.3)}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);align-items:center;justify-content:center;z-index:200}
 .modal-overlay.show{display:flex}
-.modal{background:#16213e;border-radius:12px;padding:28px;width:360px;max-width:92vw}
-.modal h2{text-align:center;margin-bottom:20px;color:#e94560}
+.modal{background:var(--bg-secondary);border-radius:12px;padding:28px;width:360px;max-width:92vw;border:1px solid #333}
+.modal h2{text-align:center;margin-bottom:20px;background:linear-gradient(137.48deg,#ffdb3b 10%,#fe53bb 45%,#8f51ea 67%,#0044ff 87%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .modal .form-group{margin-bottom:14px}
 .modal label{display:block;color:#aaa;margin-bottom:4px;font-size:.85rem}
-.modal input{width:100%;padding:9px 12px;border:none;border-radius:6px;background:#0f3460;color:#eee;font-size:.9rem;outline:none}
+.modal input{width:100%;padding:9px 12px;border:1px solid #333;border-radius:6px;background:var(--bg-card);color:#eee;font-size:.9rem;outline:none}
+.modal input:focus{border-color:var(--accent)}
 .modal input::placeholder{color:#555}
 .modal button{width:100%;padding:9px;margin-top:4px}
 .modal .switch-link{text-align:center;margin-top:12px;color:#888;font-size:.85rem;cursor:pointer}
-.modal .switch-link:hover{color:#e94560}
+.modal .switch-link:hover{color:var(--accent)}
 .modal .modal-error{background:#3d1a1a;color:#ff6b6b;padding:6px 10px;border-radius:6px;margin-bottom:12px;font-size:.8rem;display:none}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes gradient_301{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 </style>
 </head>
 <body>
@@ -166,7 +179,7 @@ section:nth-child(even){background:#15152a}
       <div class="friends-sidebar">
         <div class="tabs">
           <div class="tab active" data-ftab="list">我的好友</div>
-          <div class="tab" data-ftab="requests" id="tab-requests">请求 <span id="req-badge" style="display:none;background:#e94560;color:#fff;border-radius:10px;padding:0 6px;font-size:.7rem;margin-left:2px">0</span></div>
+          <div class="tab" data-ftab="requests" id="tab-requests">请求 <span id="req-badge" style="display:none;background:#fe53bb;color:#fff;border-radius:10px;padding:0 6px;font-size:.7rem;margin-left:2px">0</span></div>
           <div class="tab" data-ftab="search">添加</div>
         </div>
         <div class="tab-content" id="ftab-list"><div class="no-data">暂无好友</div></div>
@@ -300,11 +313,11 @@ function showModal(type) {
   if (type === 'login') {
     document.getElementById('modal-title').textContent = '登录';
     document.getElementById('modal-body').innerHTML = `<div class="form-group"><label>用户名</label><input id="m-user" placeholder="输入用户名"></div><div class="form-group"><label>密码</label><input id="m-pass" type="password" placeholder="输入密码"></div><button class="btn btn-primary" onclick="doLogin()">登录</button>`;
-    document.getElementById('modal-switch').innerHTML = '没有账号？<span style="color:#e94560" onclick="showModal(\'register\')">去注册</span>';
+    document.getElementById('modal-switch').innerHTML = '没有账号？<span style="color:#fe53bb" onclick="showModal(\'register\')">去注册</span>';
   } else {
     document.getElementById('modal-title').textContent = '注册';
     document.getElementById('modal-body').innerHTML = `<div class="form-group"><label>用户名</label><input id="m-user" placeholder="输入用户名"></div><div class="form-group"><label>密码</label><input id="m-pass" type="password" placeholder="至少 4 位"></div><button class="btn btn-primary" onclick="doRegister()">注册</button>`;
-    document.getElementById('modal-switch').innerHTML = '已有账号？<span style="color:#e94560" onclick="showModal(\'login\')">去登录</span>';
+    document.getElementById('modal-switch').innerHTML = '已有账号？<span style="color:#fe53bb" onclick="showModal(\'login\')">去登录</span>';
   }
   setTimeout(() => document.getElementById('m-user')?.focus(), 100);
 }
@@ -579,11 +592,11 @@ async function loadAdmin() {
       </select></td>
       <td>Lv.${u.level||1}</td>
       <td><input class="xp-input" type="number" value="${u.xp||0}" id="xp-${u.id}" min="0" ${!canEdit?'disabled':''}></td>
-      <td>${u.banned ? '<span style="color:#e94560;font-weight:600">封禁</span>' : '<span style="color:#4caf50">正常</span>'}</td>
+      <td>${u.banned ? '<span style="color:#fe53bb;font-weight:600">封禁</span>' : '<span style="color:#4caf50">正常</span>'}</td>
       <td style="display:flex;gap:4px;flex-wrap:wrap">
         ${canEdit ? `<button class="btn btn-primary btn-sm" onclick="saveXp(${u.id})">保存</button>` : ''}
         ${u.banned ? `<button class="btn btn-ghost btn-sm" onclick="unbanUser(${u.id})">解封</button>`
-          : (isSelf ? '' : `<button class="btn btn-sm" style="background:#c0392b;color:#fff" onclick="banUser(${u.id})">封禁</button>`)}
+          : (isSelf ? '' : `<button class="btn btn-sm btn-danger" onclick="banUser(${u.id})">封禁</button>`)}
       </td>
     </tr>`;
   }).join('');
