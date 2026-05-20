@@ -83,19 +83,19 @@ section:nth-child(even){background:#15152a}
 .msg-bubble.received .msg-time{color:#666}
 .msg-bubble .xp-tag{font-size:.65rem;color:#f1c40f;margin-left:6px}
 .chat-placeholder{flex:1;display:flex;align-items:center;justify-content:center;color:#555;font-size:.9rem}
-#sec-games .games-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px}
-.game-card{background:#16213e;border-radius:12px;padding:24px;text-align:center;transition:.3s;cursor:pointer}
-.game-card:hover{transform:translateY(-4px);background:#1a1a50}
-.game-card .icon{font-size:3rem;margin-bottom:10px}
-.game-card h3{font-size:1.05rem;margin-bottom:6px}
-.game-card p{color:#888;font-size:.85rem;margin-bottom:12px}
-.game-card .play-area{background:#0f3460;border-radius:8px;padding:16px;margin-top:8px}
-.rps-choices{display:flex;justify-content:center;gap:12px;margin:8px 0}
-.rps-btn{width:60px;height:60px;border-radius:50%;border:2px solid #333;background:#0f3460;font-size:1.6rem;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center}
-.rps-btn:hover{border-color:#e94560;transform:scale(1.1)}
-.rps-btn.selected{border-color:#e94560;background:#1a1a50}
-.rps-result{font-size:1rem;min-height:1.5em}
-.rps-score{color:#888;font-size:.85rem;margin-top:4px}
+/* Minesweeper */
+.mine-cell{width:36px;height:36px;border:none;border-radius:4px;font-size:.85rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.1s;background:#0f3460;color:#eee}
+.mine-cell:hover{background:#1a1a50}
+.mine-cell.revealed{background:#16213e;cursor:default}
+.mine-cell.revealed:hover{background:#16213e}
+.mine-cell.flag{background:#3d2a1a;color:#e94560}
+.mine-cell.mine{background:#c0392b;color:#fff}
+.mine-cell.n0{color:#555}
+.mine-cell.n1{color:#4fc3f7}
+.mine-cell.n2{color:#81c784}
+.mine-cell.n3{color:#e94560}
+.mine-cell.n4{color:#9c27b0}
+.mine-cell.n5{color:#ff7043}
 /* Admin */
 #sec-admin .admin-table-wrap{overflow-x:auto;background:#16213e;border-radius:12px;padding:16px}
 #sec-admin table{width:100%;border-collapse:collapse;font-size:.85rem}
@@ -200,48 +200,15 @@ section:nth-child(even){background:#15152a}
 
   <section id="sec-games">
     <h2 class="section-title">🎮 游戏</h2>
-    <p class="section-sub">休闲小游戏，放松一下</p>
-    <div class="games-grid">
-      <div class="game-card">
-        <div class="icon">✂️</div>
-        <h3>石头剪刀布</h3>
-        <p>和电脑对决</p>
-        <div class="play-area">
-          <div class="rps-choices">
-            <button class="rps-btn" onclick="rpsPlay('rock')">🪨</button>
-            <button class="rps-btn" onclick="rpsPlay('scissors')">✂️</button>
-            <button class="rps-btn" onclick="rpsPlay('paper')">📄</button>
-          </div>
-          <div class="rps-result" id="rps-result">点击图标开始</div>
-          <div class="rps-score" id="rps-score">玩家 0 : 0 电脑</div>
-        </div>
+    <p class="section-sub">经典扫雷，点击格子揭开，右键标记地雷</p>
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <div id="mine-status" style="display:flex;gap:24px;margin-bottom:12px;font-size:.9rem;color:#888">
+        <span>💣 <span id="mine-count">10</span></span>
+        <span>⏱️ <span id="mine-timer">000</span></span>
       </div>
-      <div class="game-card">
-        <div class="icon">🎲</div>
-        <h3>猜数字</h3>
-        <p>1-100 之间猜一个数字</p>
-        <div class="play-area">
-          <div style="display:flex;gap:6px;justify-content:center;margin-bottom:6px">
-            <input id="guess-input" type="number" min="1" max="100" placeholder="输入数字" style="width:100px;padding:6px;border:none;border-radius:6px;background:#0f3460;color:#eee;text-align:center;outline:none">
-            <button class="btn btn-primary btn-sm" onclick="guessNumber()">猜</button>
-            <button class="btn btn-ghost btn-sm" onclick="resetGuess()">重置</button>
-          </div>
-          <div id="guess-result" style="color:#888;font-size:.85rem;min-height:1.5em"></div>
-        </div>
-      </div>
-      <div class="game-card">
-        <div class="icon">🪙</div>
-        <h3>抛硬币</h3>
-        <p>猜正反，试试运气</p>
-        <div class="play-area">
-          <div style="font-size:3rem;margin-bottom:6px" id="coin-result">🪙</div>
-          <div style="display:flex;gap:8px;justify-content:center">
-            <button class="btn btn-primary btn-sm" onclick="coinFlip('正面')">正面</button>
-            <button class="btn btn-ghost btn-sm" onclick="coinFlip('反面')">反面</button>
-          </div>
-          <div id="coin-message" style="color:#888;font-size:.85rem;margin-top:6px"></div>
-        </div>
-      </div>
+      <div id="mine-grid" style="display:inline-grid;grid-template-columns:repeat(9,36px);gap:2px"></div>
+      <button class="btn btn-ghost" style="margin-top:16px" onclick="initMinesweeper()">🔄 重新开始</button>
+      <div id="mine-message" style="margin-top:10px;font-size:.95rem;min-height:1.5em;color:#888"></div>
     </div>
   </section>
 
@@ -486,33 +453,112 @@ async function sendMessage() {
   socket.emit('private message', {receiverId:selectedChatFriend.id, content:text});
 }
 
-// Games
-let rpsPS=0,rpsCS=0;
-function rpsPlay(p) {
-  const e={rock:'🪨',scissors:'✂️',paper:'📄'}, beats={rock:'scissors',scissors:'paper',paper:'rock'};
-  const c = ['rock','scissors','paper'][Math.floor(Math.random()*3)];
-  document.querySelectorAll('.rps-btn').forEach(b=>b.classList.remove('selected'));
-  event.target.classList.add('selected');
-  let r;
-  if (p===c) r=`平局！双方都出了 ${e[c]}`;
-  else if (beats[p]===c) { r=`你赢了！${e[p]} 胜 ${e[c]}`; rpsPS++; }
-  else { r=`你输了！${e[c]} 胜 ${e[p]}`; rpsCS++; }
-  document.getElementById('rps-result').textContent = r;
-  document.getElementById('rps-score').textContent = `玩家 ${rpsPS} : ${rpsCS} 电脑`;
+// Minesweeper
+const MS_ROWS = 9, MS_COLS = 9, MS_MINES = 10;
+let msBoard = [], msRevealed = [], msFlagged = [], msGameOver = false, msFirst = true, msTimer = null, msSeconds = 0;
+
+function initMinesweeper() {
+  if (msTimer) { clearInterval(msTimer); msTimer = null; }
+  msBoard = Array.from({length: MS_ROWS}, () => Array(MS_COLS).fill(0));
+  msRevealed = Array.from({length: MS_ROWS}, () => Array(MS_COLS).fill(false));
+  msFlagged = Array.from({length: MS_ROWS}, () => Array(MS_COLS).fill(false));
+  msGameOver = false; msFirst = true; msSeconds = 0;
+  document.getElementById('mine-count').textContent = MS_MINES;
+  document.getElementById('mine-timer').textContent = '000';
+  document.getElementById('mine-message').textContent = '';
+  renderMineGrid();
 }
-let guessT=Math.floor(Math.random()*100)+1, guessC=0;
-function guessNumber() {
-  const v = parseInt(document.getElementById('guess-input').value);
-  if (!v||v<1||v>100) { document.getElementById('guess-result').textContent='请输入 1-100 的数字'; return; }
-  guessC++;
-  let m;
-  if (v===guessT) { m=`🎉 猜对了！就是 ${guessT}，用了 ${guessC} 次`; guessT=Math.floor(Math.random()*100)+1; guessC=0; }
-  else if (v<guessT) m=`⬆️ 小了 (第 ${guessC} 次)`;
-  else m=`⬇️ 大了 (第 ${guessC} 次)`;
-  document.getElementById('guess-result').textContent = m;
+
+function placeMines(excludeR, excludeC) {
+  let placed = 0;
+  while (placed < MS_MINES) {
+    const r = Math.floor(Math.random() * MS_ROWS);
+    const c = Math.floor(Math.random() * MS_COLS);
+    if (msBoard[r][c] !== -1 && !(r === excludeR && c === excludeC)) {
+      msBoard[r][c] = -1; placed++;
+    }
+  }
+  for (let r = 0; r < MS_ROWS; r++)
+    for (let c = 0; c < MS_COLS; c++)
+      if (msBoard[r][c] !== -1)
+        msBoard[r][c] = [[-1,0],[0,-1],[0,1],[1,0],[-1,-1],[-1,1],[1,-1],[1,1]]
+          .reduce((n, d) => n + (msBoard[r+d[0]]?.[c+d[1]] === -1 ? 1 : 0), 0);
 }
-function resetGuess() { guessT=Math.floor(Math.random()*100)+1; guessC=0; document.getElementById('guess-input').value=''; document.getElementById('guess-result').textContent='已重置'; }
-function coinFlip(g) { const r=Math.random()<0.5?'正面':'反面'; document.getElementById('coin-result').textContent=r==='正面'?'😀':'😶'; document.getElementById('coin-message').textContent=r===g?'🎉 是'+r+'，你猜对了！':'😔 是'+r+'，你猜错了'; }
+
+function renderMineGrid() {
+  const grid = document.getElementById('mine-grid');
+  grid.innerHTML = '';
+  for (let r = 0; r < MS_ROWS; r++) {
+    for (let c = 0; c < MS_COLS; c++) {
+      const cell = document.createElement('button');
+      cell.className = 'mine-cell';
+      cell.dataset.r = r; cell.dataset.c = c;
+      cell.addEventListener('click', () => msReveal(r, c));
+      cell.addEventListener('contextmenu', e => { e.preventDefault(); msFlag(r, c); });
+      grid.appendChild(cell);
+    }
+  }
+}
+
+function updateCell(r, c) {
+  const cells = document.getElementById('mine-grid').children;
+  const idx = r * MS_COLS + c;
+  const cell = cells[idx];
+  if (msRevealed[r][c]) {
+    cell.className = 'mine-cell revealed';
+    if (msBoard[r][c] === -1) { cell.textContent = '💣'; cell.classList.add('mine'); }
+    else { cell.textContent = msBoard[r][c] || ''; cell.classList.add('n' + msBoard[r][c]); }
+  } else if (msFlagged[r][c]) {
+    cell.className = 'mine-cell flag'; cell.textContent = '🚩';
+  } else {
+    cell.className = 'mine-cell'; cell.textContent = '';
+  }
+}
+
+function msReveal(r, c) {
+  if (msGameOver || msRevealed[r][c] || msFlagged[r][c]) return;
+  if (msFirst) { placeMines(r, c); msFirst = false; msTimer = setInterval(() => {
+    msSeconds++; document.getElementById('mine-timer').textContent = String(msSeconds).padStart(3, '0');
+  }, 1000); }
+  if (msBoard[r][c] === -1) {
+    msGameOver = true; clearInterval(msTimer);
+    for (let rr = 0; rr < MS_ROWS; rr++)
+      for (let cc = 0; cc < MS_COLS; cc++)
+        if (msBoard[rr][cc] === -1) { msRevealed[rr][cc] = true; updateCell(rr, cc); }
+    document.getElementById('mine-message').textContent = '💥 踩到地雷了！';
+    return;
+  }
+  reveal(r, c);
+  checkWin();
+}
+
+function reveal(r, c) {
+  if (r < 0 || r >= MS_ROWS || c < 0 || c >= MS_COLS || msRevealed[r][c] || msFlagged[r][c]) return;
+  msRevealed[r][c] = true; updateCell(r, c);
+  if (msBoard[r][c] === 0)
+    [[-1,0],[0,-1],[0,1],[1,0],[-1,-1],[-1,1],[1,-1],[1,1]].forEach(d => reveal(r+d[0], c+d[1]));
+}
+
+function msFlag(r, c) {
+  if (msGameOver || msRevealed[r][c]) return;
+  msFlagged[r][c] = !msFlagged[r][c]; updateCell(r, c);
+  const remaining = MS_MINES - Object.values(msFlagged).flat().filter(Boolean).length;
+  document.getElementById('mine-count').textContent = remaining;
+}
+
+function checkWin() {
+  const totalCells = MS_ROWS * MS_COLS;
+  const revealed = msRevealed.flat().filter(Boolean).length;
+  if (revealed === totalCells - MS_MINES) {
+    msGameOver = true; clearInterval(msTimer);
+    document.getElementById('mine-message').textContent = '🎉 你赢了！';
+    for (let r = 0; r < MS_ROWS; r++)
+      for (let c = 0; c < MS_COLS; c++)
+        if (msBoard[r][c] === -1) { msFlagged[r][c] = true; updateCell(r, c); }
+  }
+}
+
+initMinesweeper();
 
 // Admin
 async function loadAdmin() {
