@@ -975,8 +975,9 @@ function pokerRender() {
     if (canCheck) acts+=`<button class="pkr-btn" onclick="pokerAction('check')">让牌</button>`;
     else if (canCall) acts+=`<button class="pkr-btn" onclick="pokerAction('call')">跟注 ${callAmt}</button>`;
     if (maxRaise>s.currentBet) {
+      const isRaise = s.currentBet > 0;
       acts+=`<input class="pkr-raise-input" type="number" id="pkr-raise-amt" value="${Math.min(minRaise,maxRaise)}" min="${Math.min(minRaise,maxRaise)}" max="${maxRaise}">`;
-      acts+=`<button class="pkr-btn primary" onclick="pokerAction('raise',document.getElementById('pkr-raise-amt').value)">加注</button>`;
+      acts+=`<button class="pkr-btn primary" onclick="pokerAction('${isRaise?'raise':'bet'}',document.getElementById('pkr-raise-amt').value)">${isRaise?'加注':'下注'}</button>`;
       acts+=`<button class="pkr-btn" onclick="pokerAction('allin')">ALL-IN (${me.chips})</button>`;
     }
     ctrl.innerHTML=acts;
